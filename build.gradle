@@ -39,8 +39,8 @@ Gem::Specification.new do |spec|
   spec.name          = "${project.name}"
   spec.version       = "${project.version}"
   spec.authors       = ["Manabu Takayama"]
-  spec.summary       = %[S3 output plugin for Embulk]
-  spec.description   = %["Dumps records to S3."]
+  spec.summary       = %[S3 file output plugin for Embulk]
+  spec.description   = %["Stores files on S3."]
   spec.email         = ["learn.libra@gmail.com"]
   spec.licenses      = ["MIT"]
   # TODO set this: spec.homepage      = "https://github.com/learn.libra/embulk-output-s3"

@@ -29,7 +29,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 
-public class S3OutputPlugin implements FileOutputPlugin {
+public class S3FileOutputPlugin implements FileOutputPlugin {
     public interface PluginTask extends Task {
         @Config("path_prefix")
         public String getPathPrefix();
@@ -57,7 +57,7 @@ public class S3OutputPlugin implements FileOutputPlugin {
     public static class S3FileOutput extends OutputStreamFileOutput implements
             TransactionalFileOutput {
         public static class Provider implements OutputStreamFileOutput.Provider {
-            private final Logger log = Exec.getLogger(S3OutputPlugin.class);
+            private final Logger log = Exec.getLogger(S3FileOutputPlugin.class);
 
             private int taskIndex;
             private int fileIndex;

@@ -1,10 +1,10 @@
-# S3 output plugin for Embulk
+# S3 file output plugin for Embulk
 
 TODO: Write short description here and build.gradle file.
 
 ## Overview
 
-* **Plugin type**: output
+* **Plugin type**: file output
 * **Load all or nothing**: no
 * **Resume supported**: no
 * **Cleanup supported**: yes
