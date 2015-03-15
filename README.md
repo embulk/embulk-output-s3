@@ -4,7 +4,7 @@
 
 * **Plugin type**: file output
 * **Load all or nothing**: no
-* **Resume supported**: no
+* **Resume supported**: yes
 * **Cleanup supported**: yes
 
 ## Configuration
@@ -16,6 +16,7 @@
 - **endpoint**: S3 endpoint login user name (string, optional)
 - **access_key_id**: AWS access key id (string, required)
 - **secret_access_key**: AWS secret key (string, required)
+- **tmp_path_prefix**: prefix of temporary files (string, defualt: 'embulk-output-s3-')
 
 ## Example
 

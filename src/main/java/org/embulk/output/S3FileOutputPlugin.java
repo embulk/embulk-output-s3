@@ -1,9 +1,9 @@
 package org.embulk.output;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
@@ -16,10 +16,11 @@ import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
+import org.embulk.spi.Buffer;
 import org.embulk.spi.Exec;
+import org.embulk.spi.FileOutput;
 import org.embulk.spi.FileOutputPlugin;
 import org.embulk.spi.TransactionalFileOutput;
-import org.embulk.spi.util.OutputStreamFileOutput;
 import org.slf4j.Logger;
 
 import com.amazonaws.ClientConfiguration;
@@ -52,115 +53,159 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
 
         @Config("secret_access_key")
         public String getSecretAccessKey();
+
+        @Config("tmp_path_prefix")
+        @ConfigDefault("\"embulk-output-s3-\"")
+        public String getTempPathPrefix();
     }
 
-    public static class S3FileOutput extends OutputStreamFileOutput implements
+    public static class S3FileOutput implements FileOutput,
             TransactionalFileOutput {
-        public static class Provider implements OutputStreamFileOutput.Provider {
-            private final Logger log = Exec.getLogger(S3FileOutputPlugin.class);
+        private final Logger log = Exec.getLogger(S3FileOutputPlugin.class);
 
-            private int taskIndex;
-            private int fileIndex;
-            private AmazonS3Client client;
-            private String bucket;
-            private String pathPrefix;
-            private String sequenceFormat;
-            private String fileNameExtension;
-            private File tempFile;
-            private boolean opened = false;
+        private final String bucket;
+        private final String pathPrefix;
+        private final String sequenceFormat;
+        private final String fileNameExtension;
+        private final String tempPathPrefix;
 
-            public static AWSCredentialsProvider getCredentialsProvider(
-                    PluginTask task) {
-                final AWSCredentials cred = new BasicAWSCredentials(
-                        task.getAccessKeyId(), task.getSecretAccessKey());
-                return new AWSCredentialsProvider() {
-                    @Override
-                    public AWSCredentials getCredentials() {
-                        return cred;
-                    }
+        private int taskIndex;
+        private int fileIndex;
+        private AmazonS3Client client;
+        private OutputStream current;
+        private Path tempFilePath;
 
-                    @Override
-                    public void refresh() {
-                    }
-                };
-            }
+        public static AWSCredentialsProvider getCredentialsProvider(
+                PluginTask task) {
+            final AWSCredentials cred = new BasicAWSCredentials(
+                    task.getAccessKeyId(), task.getSecretAccessKey());
+            return new AWSCredentialsProvider() {
+                @Override
+                public AWSCredentials getCredentials() {
+                    return cred;
+                }
 
-            private static AmazonS3Client newS3Client(PluginTask task) {
-                AWSCredentialsProvider credentials = getCredentialsProvider(task);
+                @Override
+                public void refresh() {
+                }
+            };
+        }
 
-                ClientConfiguration config = new ClientConfiguration();
-                // TODO: Support more configurations.
+        private static AmazonS3Client newS3Client(PluginTask task) {
+            AWSCredentialsProvider credentials = getCredentialsProvider(task);
 
-                AmazonS3Client client = new AmazonS3Client(credentials, config);
-                client.setEndpoint(task.getEndpoint());
+            ClientConfiguration config = new ClientConfiguration();
+            // TODO: Support more configurations.
 
-                return client;
-            }
+            AmazonS3Client client = new AmazonS3Client(credentials, config);
+            client.setEndpoint(task.getEndpoint());
 
-            public Provider(PluginTask task, int taskIndex) {
-                this.taskIndex = taskIndex;
-                this.client = newS3Client(task);
-                this.bucket = task.getBucket();
-                this.pathPrefix = task.getPathPrefix();
-                this.sequenceFormat = task.getSequenceFormat();
-                this.fileNameExtension = task.getFileNameExtension();
-            }
-
-            private static File newTempFile() throws IOException {
-                File file = File.createTempFile("embulk-output-s3-", null);
-                file.deleteOnExit();
-                return file;
-            }
-
-            private String buildCurrentPath() {
-                String sequence = String.format(sequenceFormat, taskIndex,
-                        fileIndex);
-                return pathPrefix + sequence + fileNameExtension;
-            }
-
-            @Override
-            public OutputStream openNext() throws IOException {
-                if (opened)
-                    return null;
-
-                opened = true;
-                tempFile = newTempFile();
-
-                log.info("Writing S3 file '{}'", buildCurrentPath());
-
-                return new FileOutputStream(tempFile);
-            }
-
-            @Override
-            public void finish() throws IOException {
-                if (tempFile == null)
-                    return;
-
-                close();
-            }
-
-            @Override
-            public void close() throws IOException {
-                if (tempFile == null)
-                    return;
-
-                PutObjectRequest request = new PutObjectRequest(bucket,
-                        buildCurrentPath(), tempFile);
-
-                client.putObject(request);
-
-                tempFile = null;
-
-                fileIndex++;
-            }
+            return client;
         }
 
         public S3FileOutput(PluginTask task, int taskIndex) {
-            super(new Provider(task, taskIndex));
+            this.taskIndex = taskIndex;
+            this.client = newS3Client(task);
+            this.bucket = task.getBucket();
+            this.pathPrefix = task.getPathPrefix();
+            this.sequenceFormat = task.getSequenceFormat();
+            this.fileNameExtension = task.getFileNameExtension();
+            this.tempPathPrefix = task.getTempPathPrefix();
+        }
+
+        private static Path newTempFile(String prefix) throws IOException {
+            return Files.createTempFile(prefix, null);
+        }
+
+        private void deleteTempFile() {
+            if (tempFilePath == null) {
+                return;
+            }
+
+            try {
+                Files.delete(tempFilePath);
+                tempFilePath = null;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private String buildCurrentKey() {
+            String sequence = String.format(sequenceFormat, taskIndex,
+                    fileIndex);
+            return pathPrefix + sequence + fileNameExtension;
+        }
+
+        private void putFile(Path from, String key) {
+            PutObjectRequest request = new PutObjectRequest(bucket, key,
+                    from.toFile());
+            client.putObject(request);
+        }
+
+        private void closeCurrent() {
+            if (current == null) {
+                return;
+            }
+
+            try {
+                putFile(tempFilePath, buildCurrentKey());
+                fileIndex++;
+            } finally {
+                try {
+                    current.close();
+                    current = null;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    deleteTempFile();
+                }
+            }
+        }
+
+        @Override
+        public void nextFile() {
+            closeCurrent();
+
+            try {
+                tempFilePath = newTempFile(tempPathPrefix);
+
+                log.info("Writing S3 file '{}'", buildCurrentKey());
+
+                current = Files.newOutputStream(tempFilePath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void add(Buffer buffer) {
+            if (current == null) {
+                throw new IllegalStateException(
+                        "nextFile() must be called before poll()");
+            }
+
+            try {
+                current.write(buffer.array(), buffer.offset(), buffer.limit());
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            } finally {
+                buffer.release();
+            }
+        }
+
+        @Override
+        public void finish() {
+            closeCurrent();
+        }
+
+        @Override
+        public void close() {
+            closeCurrent();
         }
 
         @Override
         public void abort() {
+            deleteTempFile();
         }
 
         @Override
