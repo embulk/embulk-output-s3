@@ -1,7 +1,5 @@
 # S3 file output plugin for Embulk
 
-TODO: Write short description here and build.gradle file.
-
 ## Overview
 
 * **Plugin type**: file output
@@ -11,16 +9,25 @@ TODO: Write short description here and build.gradle file.
 
 ## Configuration
 
-- **property1**: description (string, required)
-- **property2**: description (integer, default: default-value)
+- **path_prefix**: prefix of target keys (string, required)
+- **file_ext**: suffix of target keys (string, required)
+- **sequence_format**: format for sequence part of target keys (string, default: '.%03d.%02d')
+- **bucket**: S3 bucket name (string, required)
+- **endpoint**: S3 endpoint login user name (string, optional)
+- **access_key_id**: AWS access key id (string, required)
+- **secret_access_key**: AWS secret key (string, required)
 
 ## Example
 
 ```yaml
-out:
-  type: s3
-  property1: example1
-  property2: example2
+path_prefix: logs/out
+file_ext: .csv
+bucket: my-s3-bucket
+endpoint: s3-us-west-1.amazonaws.com
+access_key_id: ABCXYZ123ABCXYZ123
+secret_access_key: AbCxYz123aBcXyZ123
+formatter:
+  type: csv
 ```
 
 
