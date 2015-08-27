@@ -14,8 +14,8 @@
 - **sequence_format**: format for sequence part of target keys (string, default: '.%03d.%02d')
 - **bucket**: S3 bucket name (string, required)
 - **endpoint**: S3 endpoint login user name (string, optional)
-- **access_key_id**: AWS access key id (string, required)
-- **secret_access_key**: AWS secret key (string, required)
+- **access_key_id**: AWS access key id. This parameter is required when your agent is not running on EC2 instance with an IAM Role. (string, defualt: null)
+- **secret_access_key**: AWS secret key. This parameter is required when your agent is not running on EC2 instance with an IAM Role. (string, defualt: null)
 - **tmp_path_prefix**: prefix of temporary files (string, defualt: 'embulk-output-s3-')
 
 ## Example

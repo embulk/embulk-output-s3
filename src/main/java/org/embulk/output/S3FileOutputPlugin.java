@@ -24,11 +24,11 @@ import org.embulk.spi.TransactionalFileOutput;
 import org.slf4j.Logger;
 
 import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.google.common.base.Optional;
 
 public class S3FileOutputPlugin implements FileOutputPlugin {
     public interface PluginTask extends Task {
@@ -49,10 +49,12 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
         public String getEndpoint();
 
         @Config("access_key_id")
-        public String getAccessKeyId();
+        @ConfigDefault("null")
+        public Optional<String> getAccessKeyId();
 
         @Config("secret_access_key")
-        public String getSecretAccessKey();
+        @ConfigDefault("null")
+        public Optional<String> getSecretAccessKey();
 
         @Config("tmp_path_prefix")
         @ConfigDefault("\"embulk-output-s3-\"")
@@ -75,30 +77,29 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
         private OutputStream current;
         private Path tempFilePath;
 
-        public static AWSCredentialsProvider getCredentialsProvider(
-                PluginTask task) {
-            final AWSCredentials cred = new BasicAWSCredentials(
-                    task.getAccessKeyId(), task.getSecretAccessKey());
-            return new AWSCredentialsProvider() {
-                @Override
-                public AWSCredentials getCredentials() {
-                    return cred;
-                }
-
-                @Override
-                public void refresh() {
-                }
-            };
-        }
-
         private static AmazonS3Client newS3Client(PluginTask task) {
-            AWSCredentialsProvider credentials = getCredentialsProvider(task);
+            AmazonS3Client client = null;
+            try {
+                if (task.getAccessKeyId().isPresent()) {
+                    BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
+                        task.getAccessKeyId().get(), task.getSecretAccessKey().get());
 
-            ClientConfiguration config = new ClientConfiguration();
-            // TODO: Support more configurations.
+                    ClientConfiguration config = new ClientConfiguration();
+                    // TODO: Support more configurations.
 
-            AmazonS3Client client = new AmazonS3Client(credentials, config);
-            client.setEndpoint(task.getEndpoint());
+                    client = new AmazonS3Client(basicAWSCredentials, config);
+                } else {
+                    if (System.getenv("AWS_ACCESS_KEY_ID") == null) {
+                        client = new AmazonS3Client(new EnvironmentVariableCredentialsProvider());
+                    } else { // IAM ROLE
+                        client = new AmazonS3Client();
+                    }
+                }
+                client.setEndpoint(task.getEndpoint());
+                client.isRequesterPaysEnabled(task.getBucket()); // check s3 access.
+            } catch (Exception e) {
+                throw new RuntimeException("can't call S3 API. Please check your access_key_id / secret_access_key or s3_region configuration.", e);
+            }
 
             return client;
         }
