@@ -14,9 +14,12 @@ configurations {
 
 version = "0.2.0"
 
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
 dependencies {
-    compile  "org.embulk:embulk-core:0.5.2"
-    provided "org.embulk:embulk-core:0.5.2"
+    compile  "org.embulk:embulk-core:0.7.0"
+    provided "org.embulk:embulk-core:0.7.0"
     compile  "com.amazonaws:aws-java-sdk-s3:1.9.24"
     testCompile "junit:junit:4.+"
 }

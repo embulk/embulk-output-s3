@@ -8,7 +8,7 @@ import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
 
-import org.embulk.config.CommitReport;
+import org.embulk.config.TaskReport;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
@@ -210,8 +210,8 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
         }
 
         @Override
-        public CommitReport commit() {
-            CommitReport report = Exec.newCommitReport();
+        public TaskReport commit() {
+            TaskReport report = Exec.newTaskReport();
             return report;
         }
     }
@@ -247,7 +247,7 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
 
     @Override
     public void cleanup(TaskSource taskSource, int taskCount,
-            List<CommitReport> successCommitReports) {
+            List<TaskReport> successTaskReports) {
     }
 
     @Override
