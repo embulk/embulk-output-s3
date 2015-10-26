@@ -96,12 +96,7 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
                         client = new AmazonS3Client();
                     }
                 }
-
-                if (task.getEndpoint().isPresent()) {
-                    client.setEndpoint(task.getEndpoint().get());
-                }
-                
-                client.isRequesterPaysEnabled(task.getBucket()); // check s3 access.
+                client.setEndpoint(task.getEndpoint());
             } catch (Exception e) {
                 throw new RuntimeException("can't call S3 API. Please check your access_key_id / secret_access_key or s3_region configuration.", e);
             }
