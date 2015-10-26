@@ -46,7 +46,8 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
         public String getBucket();
 
         @Config("endpoint")
-        public String getEndpoint();
+        @ConfigDefault("null")
+        public Optional<String> getEndpoint();
 
         @Config("access_key_id")
         @ConfigDefault("null")
@@ -95,7 +96,11 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
                         client = new AmazonS3Client();
                     }
                 }
-                client.setEndpoint(task.getEndpoint());
+
+                if (task.getEndpoint().isPresent()) {
+                    client.setEndpoint(task.getEndpoint().get());
+                }
+                
                 client.isRequesterPaysEnabled(task.getBucket()); // check s3 access.
             } catch (Exception e) {
                 throw new RuntimeException("can't call S3 API. Please check your access_key_id / secret_access_key or s3_region configuration.", e);
