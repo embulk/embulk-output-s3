@@ -80,30 +80,24 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
 
         private static AmazonS3Client newS3Client(PluginTask task) {
             AmazonS3Client client = null;
-            try {
-                if (task.getAccessKeyId().isPresent()) {
-                    BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
-                        task.getAccessKeyId().get(), task.getSecretAccessKey().get());
 
-                    ClientConfiguration config = new ClientConfiguration();
-                    // TODO: Support more configurations.
+            if (task.getAccessKeyId().isPresent()) {
+                BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
+                    task.getAccessKeyId().get(), task.getSecretAccessKey().get());
 
-                    client = new AmazonS3Client(basicAWSCredentials, config);
-                } else {
-                    if (System.getenv("AWS_ACCESS_KEY_ID") == null) {
-                        client = new AmazonS3Client(new EnvironmentVariableCredentialsProvider());
-                    } else { // IAM ROLE
-                        client = new AmazonS3Client();
-                    }
+                ClientConfiguration config = new ClientConfiguration();
+                // TODO: Support more configurations.
+
+                client = new AmazonS3Client(basicAWSCredentials, config);
+            } else {
+                if (System.getenv("AWS_ACCESS_KEY_ID") == null) {
+                    client = new AmazonS3Client(new EnvironmentVariableCredentialsProvider());
+                } else { // IAM ROLE
+                    client = new AmazonS3Client();
                 }
-
-                if (task.getEndpoint().isPresent()) {
-                    client.setEndpoint(task.getEndpoint().get());
-                }
-                
-                client.isRequesterPaysEnabled(task.getBucket()); // check s3 access.
-            } catch (Exception e) {
-                throw new RuntimeException("can't call S3 API. Please check your access_key_id / secret_access_key or s3_region configuration.", e);
+            }
+            if (task.getEndpoint().isPresent()) {
+                client.setEndpoint(task.getEndpoint().get());
             }
 
             return client;
