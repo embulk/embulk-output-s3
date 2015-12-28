@@ -2,9 +2,9 @@
 
 ## Developers
 
-Manabu Takayama <learn.libra@gmail.com>
-toyama hiroshi <toyama0919@gmail.com>
-Civitaspo <civitaspo@gmail.com>
+* Manabu Takayama <learn.libra@gmail.com>
+* toyama hiroshi <toyama0919@gmail.com>
+* Civitaspo <civitaspo@gmail.com>
 
 ## Overview
 
