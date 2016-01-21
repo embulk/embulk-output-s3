@@ -8,6 +8,8 @@ import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
 
+import com.amazonaws.services.s3.model.AccessControlList;
+import com.google.common.collect.ImmutableMap;
 import org.embulk.config.TaskReport;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -28,11 +30,20 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.google.common.base.Optional;
 
 public class S3FileOutputPlugin
         implements FileOutputPlugin
 {
+    private static ImmutableMap<String, CannedAccessControlList> s3ObjectACL = getS3ObjectACL();
+    private static ImmutableMap<String, CannedAccessControlList> getS3ObjectACL() {
+        ImmutableMap.Builder<String, CannedAccessControlList> builder = ImmutableMap.builder();
+        builder.put("bucket_owner_full_control", CannedAccessControlList.BucketOwnerFullControl);
+        builder.put("bucket_owner_read", CannedAccessControlList.BucketOwnerRead);
+        return builder.build();
+    }
+
     public interface PluginTask
             extends Task
     {
@@ -155,6 +166,7 @@ public class S3FileOutputPlugin
         {
             PutObjectRequest request = new PutObjectRequest(bucket, key,
                     from.toFile());
+            request.withCannedAcl(CannedAccessControlList.BucketOwnerFullControl);
             client.putObject(request);
         }
 
