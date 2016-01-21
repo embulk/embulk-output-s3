@@ -30,8 +30,12 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.google.common.base.Optional;
 
-public class S3FileOutputPlugin implements FileOutputPlugin {
-    public interface PluginTask extends Task {
+public class S3FileOutputPlugin
+        implements FileOutputPlugin
+{
+    public interface PluginTask
+            extends Task
+    {
         @Config("path_prefix")
         public String getPathPrefix();
 
@@ -62,8 +66,10 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
         public String getTempPathPrefix();
     }
 
-    public static class S3FileOutput implements FileOutput,
-            TransactionalFileOutput {
+    public static class S3FileOutput
+            implements FileOutput,
+            TransactionalFileOutput
+    {
         private final Logger log = Exec.getLogger(S3FileOutputPlugin.class);
 
         private final String bucket;
@@ -78,21 +84,24 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
         private OutputStream current;
         private Path tempFilePath;
 
-        private static AmazonS3Client newS3Client(PluginTask task) {
+        private static AmazonS3Client newS3Client(PluginTask task)
+        {
             AmazonS3Client client = null;
 
             if (task.getAccessKeyId().isPresent()) {
                 BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
-                    task.getAccessKeyId().get(), task.getSecretAccessKey().get());
+                        task.getAccessKeyId().get(), task.getSecretAccessKey().get());
 
                 ClientConfiguration config = new ClientConfiguration();
                 // TODO: Support more configurations.
 
                 client = new AmazonS3Client(basicAWSCredentials, config);
-            } else {
+            }
+            else {
                 if (System.getenv("AWS_ACCESS_KEY_ID") == null) {
                     client = new AmazonS3Client(new EnvironmentVariableCredentialsProvider());
-                } else { // IAM ROLE
+                }
+                else { // IAM ROLE
                     client = new AmazonS3Client();
                 }
             }
@@ -103,7 +112,8 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
             return client;
         }
 
-        public S3FileOutput(PluginTask task, int taskIndex) {
+        public S3FileOutput(PluginTask task, int taskIndex)
+        {
             this.taskIndex = taskIndex;
             this.client = newS3Client(task);
             this.bucket = task.getBucket();
@@ -113,11 +123,14 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
             this.tempPathPrefix = task.getTempPathPrefix();
         }
 
-        private static Path newTempFile(String prefix) throws IOException {
+        private static Path newTempFile(String prefix)
+                throws IOException
+        {
             return Files.createTempFile(prefix, null);
         }
 
-        private void deleteTempFile() {
+        private void deleteTempFile()
+        {
             if (tempFilePath == null) {
                 return;
             }
@@ -125,24 +138,28 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
             try {
                 Files.delete(tempFilePath);
                 tempFilePath = null;
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        private String buildCurrentKey() {
+        private String buildCurrentKey()
+        {
             String sequence = String.format(sequenceFormat, taskIndex,
                     fileIndex);
             return pathPrefix + sequence + fileNameExtension;
         }
 
-        private void putFile(Path from, String key) {
+        private void putFile(Path from, String key)
+        {
             PutObjectRequest request = new PutObjectRequest(bucket, key,
                     from.toFile());
             client.putObject(request);
         }
 
-        private void closeCurrent() {
+        private void closeCurrent()
+        {
             if (current == null) {
                 return;
             }
@@ -150,20 +167,24 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
             try {
                 putFile(tempFilePath, buildCurrentKey());
                 fileIndex++;
-            } finally {
+            }
+            finally {
                 try {
                     current.close();
                     current = null;
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
                     throw new RuntimeException(e);
-                } finally {
+                }
+                finally {
                     deleteTempFile();
                 }
             }
         }
 
         @Override
-        public void nextFile() {
+        public void nextFile()
+        {
             closeCurrent();
 
             try {
@@ -172,13 +193,15 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
                 log.info("Writing S3 file '{}'", buildCurrentKey());
 
                 current = Files.newOutputStream(tempFilePath);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
         @Override
-        public void add(Buffer buffer) {
+        public void add(Buffer buffer)
+        {
             if (current == null) {
                 throw new IllegalStateException(
                         "nextFile() must be called before poll()");
@@ -186,41 +209,49 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
 
             try {
                 current.write(buffer.array(), buffer.offset(), buffer.limit());
-            } catch (IOException ex) {
+            }
+            catch (IOException ex) {
                 throw new RuntimeException(ex);
-            } finally {
+            }
+            finally {
                 buffer.release();
             }
         }
 
         @Override
-        public void finish() {
+        public void finish()
+        {
             closeCurrent();
         }
 
         @Override
-        public void close() {
+        public void close()
+        {
             closeCurrent();
         }
 
         @Override
-        public void abort() {
+        public void abort()
+        {
             deleteTempFile();
         }
 
         @Override
-        public TaskReport commit() {
+        public TaskReport commit()
+        {
             TaskReport report = Exec.newTaskReport();
             return report;
         }
     }
 
-    private void validateSequenceFormat(PluginTask task) {
+    private void validateSequenceFormat(PluginTask task)
+    {
         try {
             @SuppressWarnings("unused")
             String dontCare = String.format(Locale.ENGLISH,
                     task.getSequenceFormat(), 0, 0);
-        } catch (IllegalFormatException ex) {
+        }
+        catch (IllegalFormatException ex) {
             throw new ConfigException(
                     "Invalid sequence_format: parameter for file output plugin",
                     ex);
@@ -229,7 +260,8 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
 
     @Override
     public ConfigDiff transaction(ConfigSource config, int taskCount,
-            Control control) {
+            Control control)
+    {
         PluginTask task = config.loadConfig(PluginTask.class);
 
         validateSequenceFormat(task);
@@ -239,18 +271,21 @@ public class S3FileOutputPlugin implements FileOutputPlugin {
 
     @Override
     public ConfigDiff resume(TaskSource taskSource, int taskCount,
-            Control control) {
+            Control control)
+    {
         control.run(taskSource);
         return Exec.newConfigDiff();
     }
 
     @Override
     public void cleanup(TaskSource taskSource, int taskCount,
-            List<TaskReport> successTaskReports) {
+            List<TaskReport> successTaskReports)
+    {
     }
 
     @Override
-    public TransactionalFileOutput open(TaskSource taskSource, int taskIndex) {
+    public TransactionalFileOutput open(TaskSource taskSource, int taskIndex)
+    {
         PluginTask task = taskSource.loadTask(PluginTask.class);
 
         return new S3FileOutput(task, taskIndex);
