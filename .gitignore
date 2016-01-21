@@ -9,3 +9,5 @@ build/
 bin/
 .classpath
 .project
+*.gemspec
+*.iml
