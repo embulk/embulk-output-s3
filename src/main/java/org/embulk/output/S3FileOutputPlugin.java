@@ -1,22 +1,19 @@
 package org.embulk.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.IllegalFormatException;
-import java.util.List;
-import java.util.Locale;
-
-import com.amazonaws.services.s3.model.AccessControlList;
-import com.google.common.collect.ImmutableMap;
-import org.embulk.config.TaskReport;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.google.common.base.Optional;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
+import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.Buffer;
 import org.embulk.spi.Exec;
@@ -25,60 +22,52 @@ import org.embulk.spi.FileOutputPlugin;
 import org.embulk.spi.TransactionalFileOutput;
 import org.slf4j.Logger;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.IllegalFormatException;
+import java.util.List;
+import java.util.Locale;
 
 public class S3FileOutputPlugin
         implements FileOutputPlugin
 {
-    private static ImmutableMap<String, CannedAccessControlList> s3ObjectACL = getS3ObjectACL();
-    private static ImmutableMap<String, CannedAccessControlList> getS3ObjectACL() {
-        ImmutableMap.Builder<String, CannedAccessControlList> builder = ImmutableMap.builder();
-        builder.put("bucket_owner_full_control", CannedAccessControlList.BucketOwnerFullControl);
-        builder.put("bucket_owner_read", CannedAccessControlList.BucketOwnerRead);
-        return builder.build();
-    }
-
     public interface PluginTask
             extends Task
     {
         @Config("path_prefix")
-        public String getPathPrefix();
+        String getPathPrefix();
 
         @Config("file_ext")
-        public String getFileNameExtension();
+        String getFileNameExtension();
 
         @Config("sequence_format")
         @ConfigDefault("\".%03d.%02d\"")
-        public String getSequenceFormat();
+        String getSequenceFormat();
 
         @Config("bucket")
-        public String getBucket();
+        String getBucket();
 
         @Config("endpoint")
         @ConfigDefault("null")
-        public Optional<String> getEndpoint();
+        Optional<String> getEndpoint();
 
         @Config("access_key_id")
         @ConfigDefault("null")
-        public Optional<String> getAccessKeyId();
+        Optional<String> getAccessKeyId();
 
         @Config("secret_access_key")
         @ConfigDefault("null")
-        public Optional<String> getSecretAccessKey();
+        Optional<String> getSecretAccessKey();
 
         @Config("tmp_path_prefix")
         @ConfigDefault("\"embulk-output-s3-\"")
-        public String getTempPathPrefix();
+        String getTempPathPrefix();
 
         @Config("canned_acl")
         @ConfigDefault("null")
-        public Optional<CannedAccessControlList> getCannedAccessControlList();
+        Optional<CannedAccessControlList> getCannedAccessControlList();
     }
 
     public static class S3FileOutput
