@@ -75,6 +75,10 @@ public class S3FileOutputPlugin
         @Config("tmp_path_prefix")
         @ConfigDefault("\"embulk-output-s3-\"")
         public String getTempPathPrefix();
+
+        @Config("canned_acl")
+        @ConfigDefault("null")
+        public Optional<CannedAccessControlList> getCannedAccessControlList();
     }
 
     public static class S3FileOutput
@@ -88,6 +92,7 @@ public class S3FileOutputPlugin
         private final String sequenceFormat;
         private final String fileNameExtension;
         private final String tempPathPrefix;
+        private final Optional<CannedAccessControlList> cannedAccessControlListOptional;
 
         private int taskIndex;
         private int fileIndex;
@@ -97,7 +102,7 @@ public class S3FileOutputPlugin
 
         private static AmazonS3Client newS3Client(PluginTask task)
         {
-            AmazonS3Client client = null;
+            AmazonS3Client client;
 
             if (task.getAccessKeyId().isPresent()) {
                 BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
@@ -132,6 +137,7 @@ public class S3FileOutputPlugin
             this.sequenceFormat = task.getSequenceFormat();
             this.fileNameExtension = task.getFileNameExtension();
             this.tempPathPrefix = task.getTempPathPrefix();
+            this.cannedAccessControlListOptional = task.getCannedAccessControlList();
         }
 
         private static Path newTempFile(String prefix)
@@ -164,9 +170,10 @@ public class S3FileOutputPlugin
 
         private void putFile(Path from, String key)
         {
-            PutObjectRequest request = new PutObjectRequest(bucket, key,
-                    from.toFile());
-            request.withCannedAcl(CannedAccessControlList.BucketOwnerFullControl);
+            PutObjectRequest request = new PutObjectRequest(bucket, key, from.toFile());
+            if (cannedAccessControlListOptional.isPresent()) {
+                request.withCannedAcl(cannedAccessControlListOptional.get());
+            }
             client.putObject(request);
         }
 
