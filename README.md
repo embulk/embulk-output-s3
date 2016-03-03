@@ -29,21 +29,13 @@
 you can choose one of the below list.
 
 - AuthenticatedRead
-  - Specifies the owner is granted Permission.FullControl and the GroupGrantee.AuthenticatedUsers group grantee is granted Permission.Read access.
 - AwsExecRead
-  - Specifies the owner is granted Permission.FullControl.
 - BucketOwnerFullControl
-  - Specifies the owner of the bucket, but not necessarily the same as the owner of the object, is granted Permission.FullControl.
 - BucketOwnerRead
-  - Specifies the owner of the bucket, but not necessarily the same as the owner of the object, is granted Permission.Read.
 - LogDeliveryWrite
-  - Specifies the owner is granted Permission.FullControl and the GroupGrantee.LogDelivery group grantee is granted Permission.Write access so that access logs can be delivered.
 - Private
-  - Specifies the owner is granted Permission.FullControl.
 - PublicRead
-  - Specifies the owner is granted Permission.FullControl and the GroupGrantee.AllUsers group grantee is granted Permission.Read access.
 - PublicReadWrite
-  - Specifies the owner is granted Permission.FullControl and the GroupGrantee.AllUsers group grantee is granted Permission.Read and Permission.Write access.
 
 cf. http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/s3/model/CannedAccessControlList.html
 
