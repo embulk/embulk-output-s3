@@ -22,7 +22,22 @@
 - **endpoint**: S3 endpoint login user name (string, optional)
 - **access_key_id**: AWS access key id. This parameter is required when your agent is not running on EC2 instance with an IAM Role. (string, defualt: null)
 - **secret_access_key**: AWS secret key. This parameter is required when your agent is not running on EC2 instance with an IAM Role. (string, defualt: null)
-- **tmp_path_prefix**: prefix of temporary files (string, defualt: 'embulk-output-s3-')
+- **tmp_path_prefix**: prefix of temporary files (string, default: 'embulk-output-s3-')
+- **canned_acl**: canned access control list for created objects ([enum](#cannedaccesscontrollist), default: null)
+
+### CannedAccessControlList
+you can choose one of the below list.
+
+- AuthenticatedRead
+- AwsExecRead
+- BucketOwnerFullControl
+- BucketOwnerRead
+- LogDeliveryWrite
+- Private
+- PublicRead
+- PublicReadWrite
+
+cf. http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/s3/model/CannedAccessControlList.html
 
 ## Example
 

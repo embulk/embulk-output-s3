@@ -1,20 +1,19 @@
 package org.embulk.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.IllegalFormatException;
-import java.util.List;
-import java.util.Locale;
-
-import org.embulk.config.TaskReport;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.google.common.base.Optional;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.Task;
+import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.Buffer;
 import org.embulk.spi.Exec;
@@ -23,12 +22,13 @@ import org.embulk.spi.FileOutputPlugin;
 import org.embulk.spi.TransactionalFileOutput;
 import org.slf4j.Logger;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.IllegalFormatException;
+import java.util.List;
+import java.util.Locale;
 
 public class S3FileOutputPlugin
         implements FileOutputPlugin
@@ -37,33 +37,37 @@ public class S3FileOutputPlugin
             extends Task
     {
         @Config("path_prefix")
-        public String getPathPrefix();
+        String getPathPrefix();
 
         @Config("file_ext")
-        public String getFileNameExtension();
+        String getFileNameExtension();
 
         @Config("sequence_format")
         @ConfigDefault("\".%03d.%02d\"")
-        public String getSequenceFormat();
+        String getSequenceFormat();
 
         @Config("bucket")
-        public String getBucket();
+        String getBucket();
 
         @Config("endpoint")
         @ConfigDefault("null")
-        public Optional<String> getEndpoint();
+        Optional<String> getEndpoint();
 
         @Config("access_key_id")
         @ConfigDefault("null")
-        public Optional<String> getAccessKeyId();
+        Optional<String> getAccessKeyId();
 
         @Config("secret_access_key")
         @ConfigDefault("null")
-        public Optional<String> getSecretAccessKey();
+        Optional<String> getSecretAccessKey();
 
         @Config("tmp_path_prefix")
         @ConfigDefault("\"embulk-output-s3-\"")
-        public String getTempPathPrefix();
+        String getTempPathPrefix();
+
+        @Config("canned_acl")
+        @ConfigDefault("null")
+        Optional<CannedAccessControlList> getCannedAccessControlList();
     }
 
     public static class S3FileOutput
@@ -77,6 +81,7 @@ public class S3FileOutputPlugin
         private final String sequenceFormat;
         private final String fileNameExtension;
         private final String tempPathPrefix;
+        private final Optional<CannedAccessControlList> cannedAccessControlListOptional;
 
         private int taskIndex;
         private int fileIndex;
@@ -86,7 +91,7 @@ public class S3FileOutputPlugin
 
         private static AmazonS3Client newS3Client(PluginTask task)
         {
-            AmazonS3Client client = null;
+            AmazonS3Client client;
 
             if (task.getAccessKeyId().isPresent()) {
                 BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
@@ -121,6 +126,7 @@ public class S3FileOutputPlugin
             this.sequenceFormat = task.getSequenceFormat();
             this.fileNameExtension = task.getFileNameExtension();
             this.tempPathPrefix = task.getTempPathPrefix();
+            this.cannedAccessControlListOptional = task.getCannedAccessControlList();
         }
 
         private static Path newTempFile(String prefix)
@@ -153,8 +159,10 @@ public class S3FileOutputPlugin
 
         private void putFile(Path from, String key)
         {
-            PutObjectRequest request = new PutObjectRequest(bucket, key,
-                    from.toFile());
+            PutObjectRequest request = new PutObjectRequest(bucket, key, from.toFile());
+            if (cannedAccessControlListOptional.isPresent()) {
+                request.withCannedAcl(cannedAccessControlListOptional.get());
+            }
             client.putObject(request);
         }
 
