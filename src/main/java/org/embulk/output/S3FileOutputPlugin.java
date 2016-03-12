@@ -2,7 +2,7 @@ package org.embulk.output;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -103,12 +103,7 @@ public class S3FileOutputPlugin
                 client = new AmazonS3Client(basicAWSCredentials, config);
             }
             else {
-                if (System.getenv("AWS_ACCESS_KEY_ID") == null) {
-                    client = new AmazonS3Client(new EnvironmentVariableCredentialsProvider());
-                }
-                else { // IAM ROLE
-                    client = new AmazonS3Client();
-                }
+                client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain());
             }
             if (task.getEndpoint().isPresent()) {
                 client.setEndpoint(task.getEndpoint().get());
