@@ -1,12 +1,13 @@
 package org.embulk.output;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.IllegalFormatException;
+import java.util.List;
+import java.util.Locale;
+
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
@@ -22,13 +23,12 @@ import org.embulk.spi.FileOutputPlugin;
 import org.embulk.spi.TransactionalFileOutput;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.IllegalFormatException;
-import java.util.List;
-import java.util.Locale;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.google.common.base.Optional;
 
 public class S3FileOutputPlugin
         implements FileOutputPlugin
@@ -93,23 +93,20 @@ public class S3FileOutputPlugin
         {
             AmazonS3Client client;
 
+            // TODO: Support more configurations.
+            ClientConfiguration config = new ClientConfiguration();
+
             if (task.getAccessKeyId().isPresent()) {
                 BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
                         task.getAccessKeyId().get(), task.getSecretAccessKey().get());
 
-                ClientConfiguration config = new ClientConfiguration();
-                // TODO: Support more configurations.
-
                 client = new AmazonS3Client(basicAWSCredentials, config);
             }
             else {
-                if (System.getenv("AWS_ACCESS_KEY_ID") == null) {
-                    client = new AmazonS3Client(new EnvironmentVariableCredentialsProvider());
-                }
-                else { // IAM ROLE
-                    client = new AmazonS3Client();
-                }
+                // Use default credential provider chain.
+                client = new AmazonS3Client(config);
             }
+
             if (task.getEndpoint().isPresent()) {
                 client.setEndpoint(task.getEndpoint().get());
             }
