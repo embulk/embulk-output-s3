@@ -22,8 +22,11 @@
 - **endpoint**: S3 endpoint login user name (string, optional)
 - **access_key_id**: AWS access key id. This parameter is required when your agent is not running on EC2 instance with an IAM Role. (string, defualt: null)
 - **secret_access_key**: AWS secret key. This parameter is required when your agent is not running on EC2 instance with an IAM Role. (string, defualt: null)
+- **tmp_path**: temporary file directory. If null, it is associated with the default FileSystem. (string, default: null)
 - **tmp_path_prefix**: prefix of temporary files (string, default: 'embulk-output-s3-')
 - **canned_acl**: canned access control list for created objects ([enum](#cannedaccesscontrollist), default: null)
+- **proxy_host**: proxy host to use when accessing AWS S3 via proxy. (string, default: null )
+- **proxy_port**: proxy port to use when accessing AWS S3 via proxy. (string, default: null )
 
 ### CannedAccessControlList
 you can choose one of the below list.
