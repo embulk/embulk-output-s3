@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
@@ -62,10 +63,16 @@ public class S3FileOutputPlugin
         Optional<String> getSecretAccessKey();
 
         @Config("proxy_host")
+        @ConfigDefault("null")
         Optional<String> getProxyHost();
 
         @Config("proxy_port")
+        @ConfigDefault("null")
         Optional<Integer> getProxyPort();
+
+        @Config("tmp_path")
+        @ConfigDefault("null")
+        Optional<String> getTempPath();
 
         @Config("tmp_path_prefix")
         @ConfigDefault("\"embulk-output-s3-\"")
@@ -94,6 +101,7 @@ public class S3FileOutputPlugin
         private AmazonS3Client client;
         private OutputStream current;
         private Path tempFilePath;
+        private String tempPath = null;
 
         private static AmazonS3Client newS3Client(PluginTask task)
         {
@@ -137,13 +145,20 @@ public class S3FileOutputPlugin
             this.sequenceFormat = task.getSequenceFormat();
             this.fileNameExtension = task.getFileNameExtension();
             this.tempPathPrefix = task.getTempPathPrefix();
+            if (task.getTempPath().isPresent()) {
+                this.tempPath = task.getTempPath().get();
+            }
             this.cannedAccessControlListOptional = task.getCannedAccessControlList();
         }
 
-        private static Path newTempFile(String prefix)
+        private static Path newTempFile(String tmpDir, String prefix)
                 throws IOException
         {
-            return Files.createTempFile(prefix, null);
+            if (tmpDir == null) {
+                return Files.createTempFile(prefix, null);
+            } else {
+                return Files.createTempFile(Paths.get(tmpDir), prefix, null);
+            }
         }
 
         private void deleteTempFile()
@@ -207,7 +222,7 @@ public class S3FileOutputPlugin
             closeCurrent();
 
             try {
-                tempFilePath = newTempFile(tempPathPrefix);
+                tempFilePath = newTempFile(tempPath, tempPathPrefix);
 
                 log.info("Writing S3 file '{}'", buildCurrentKey());
 
