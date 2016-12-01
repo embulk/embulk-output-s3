@@ -61,6 +61,12 @@ public class S3FileOutputPlugin
         @ConfigDefault("null")
         Optional<String> getSecretAccessKey();
 
+        @Config("proxy_host")
+        Optional<String> getProxyHost();
+
+        @Config("proxy_port")
+        Optional<Integer> getProxyPort();
+
         @Config("tmp_path_prefix")
         @ConfigDefault("\"embulk-output-s3-\"")
         String getTempPathPrefix();
@@ -95,6 +101,14 @@ public class S3FileOutputPlugin
 
             // TODO: Support more configurations.
             ClientConfiguration config = new ClientConfiguration();
+
+            if (task.getProxyHost().isPresent()) {
+                config.setProxyHost(task.getProxyHost().get());
+            }
+
+            if (task.getProxyPort().isPresent()) {
+                config.setProxyPort(task.getProxyPort().get());
+            }
 
             if (task.getAccessKeyId().isPresent()) {
                 BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
