@@ -21,7 +21,7 @@ targetCompatibility = 1.7
 dependencies {
     compile  "org.embulk:embulk-core:0.8.1"
     provided "org.embulk:embulk-core:0.8.1"
-    compile  "com.amazonaws:aws-java-sdk-s3:1.10.26"
+    compile  "com.amazonaws:aws-java-sdk-s3:1.10.77"
     testCompile "junit:junit:4.+"
 }
 
