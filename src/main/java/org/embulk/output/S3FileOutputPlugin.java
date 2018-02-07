@@ -245,6 +245,7 @@ public class S3FileOutputPlugin
                 current.write(buffer.array(), buffer.offset(), buffer.limit());
             }
             catch (IOException ex) {
+                deleteTempFile();
                 throw new RuntimeException(ex);
             }
             finally {
