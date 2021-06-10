@@ -1,36 +1,54 @@
 plugins {
-    id "com.jfrog.bintray" version "1.1"
-    id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
     id "checkstyle"
+    id "maven-publish"
+//    id "signing"
+    id "org.embulk.embulk-plugins" version "0.4.2"
 }
-import com.github.jrubygradle.JRubyExec
 repositories {
     mavenCentral()
-    jcenter()
-}
-configurations {
-    provided
 }
 
+group = "io.github.llibra"
 version = "1.5.0"
+description = "Stores files on S3."
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.8.1"
-    provided "org.embulk:embulk-core:0.8.1"
-    compile  "com.amazonaws:aws-java-sdk-s3:1.11.271"
-    testCompile "junit:junit:4.+"
-}
+    compileOnly "org.embulk:embulk-spi:0.10.31"
+    compileOnly "org.embulk:embulk-api:0.10.31"
 
-task classpath(type: Copy, dependsOn: ["jar"]) {
-    doFirst { file("classpath").deleteDir() }
-    from (configurations.runtime - configurations.provided + files(jar.archivePath))
-    into "classpath"
+    compile("org.embulk:embulk-util-config:0.2.1") {
+        // They conflict with embulk-core. They are once excluded here,
+        // and added explicitly with versions exactly the same with embulk-core:0.10.19.
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "com.fasterxml.jackson.datatype", module: "jackson-datatype-jdk8"
+        exclude group: "javax.validation", module: "validation-api"
+    }
+    compile "org.embulk:embulk-util-file:0.1.3"
+
+    // They are once excluded from transitive dependencies of other dependencies,
+    // and added explicitly with versions exactly the same with embulk-core:0.10.19.
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
+    compile "javax.validation:validation-api:1.1.0.Final"
+    //compile "joda-time:joda-time:2.9.2"
+
+    compile  "com.amazonaws:aws-java-sdk-s3:1.11.271"
+
+    testCompile "junit:junit:4.13.2"
+    testCompile "org.embulk:embulk-core:0.10.31"
+    testCompile "org.embulk:embulk-core:0.10.31:tests"
+    testCompile "org.embulk:embulk-spi:0.10.31"
+    testCompile "org.embulk:embulk-api:0.10.31"
+    testCompile  "org.embulk:embulk-standards:0.10.31"
 }
-clean { delete 'classpath' }
 
 checkstyle {
     configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
@@ -49,29 +67,58 @@ task checkstyle(type: Checkstyle) {
     source = sourceSets.main.allJava + sourceSets.test.allJava
 }
 
-task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
-    script "build/gemspec"
-    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
-task gemspec << { file("build/gemspec").write($/
-Gem::Specification.new do |spec|
-  spec.name          = "${project.name}"
-  spec.version       = "${project.version}"
-  spec.authors       = ["Manabu Takayama"]
-  spec.summary       = %[S3 file output plugin for Embulk]
-  spec.description   = %[Stores files on S3.]
-  spec.email         = ["learn.libra@gmail.com"]
-  spec.licenses      = ["MIT"]
-  spec.homepage      = "https://github.com/llibra/embulk-output-s3"
+jar {
+    from rootProject.file("LICENSE")
+}
 
-  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
-  spec.test_files    = spec.files.grep(%r"^(test|spec)/")
-  spec.require_paths = ["lib"]
+sourcesJar {
+    from rootProject.file("LICENSE")
+}
 
-  spec.add_development_dependency 'bundler', ['~> 1.0']
-  spec.add_development_dependency 'rake', ['>= 10.0']
-end
-/$)
+javadocJar {
+    from rootProject.file("LICENSE")
+}
+
+//signing {
+//    // https://docs.gradle.org/current/userguide/signing_plugin.html#sec:using_gpg_agent
+//    useGpgCmd()
+//    sign publishing.publications.maven
+//}
+
+publishing {
+    publications {
+        embulkPluginMaven(MavenPublication) {  // Publish it with "publishEmbulkPluginMavenPublicationToMavenRepository".
+            from components.java  // Must be "components.java". The dependency modification works only for it.
+        }
+    }
+    repositories {
+        maven {
+            url = "${project.buildDir}/mavenPublishLocal"
+        }
+    }
+}
+
+embulkPlugin {
+    mainClass = "org.embulk.output.S3FileOutputPlugin"
+    category = "output"
+    type = "s3"
+}
+
+gem {
+    from("LICENSE.txt")  // Optional -- if you need other files in the gem.
+    authors = [ "Manabu Takayama" ]
+    email = [ "learn.libra@gmail.com" ]
+    // "description" of the gem is copied from "description" of your Gradle project.
+    summary = "S3 file output plugin for Embulk"
+    homepage = "https://github.com/llibra/embulk-output-s3"
+    licenses = [ "MIT" ]
+    //metadata = []  // Optional -- if you need metadata in the gem.
+}
+gemPush {
+    host = "https://rubygems.org"
 }
