@@ -47,7 +47,10 @@ dependencies {
     // and added explicitly with versions exactly the same with embulk-core:0.10.19.
     compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
     compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7"
+    // embulk-output-s3 1.5.0 contains jackson-databind 2.6.7.1
+    // in the gem file even embulk-core uses 2.6.7.
+    // So, I write here exactly the same version explicitly for keep compatibility.
+    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
     compile "javax.validation:validation-api:1.1.0.Final"
     compile "joda-time:joda-time:2.9.2"
