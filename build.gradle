@@ -55,6 +55,30 @@ dependencies {
     compile "javax.validation:validation-api:1.1.0.Final"
     compile "joda-time:joda-time:2.9.2"
 
+    compile("org.slf4j:jcl-over-slf4j:1.7.12") {
+        // commons-logging api is provided by jcl-over-slf4j below.
+        exclude group: "commons-logging", module: "commons-logging"
+
+        // slf4j-api conflicts with embulk-api. It should be excluded.
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+
+    // Adding dependencies on JAXB explicitly.
+
+    // JAXB 2.2.11 is chosen here because:
+    // 1. JDK 8's bundled JAXB is 2.2.8. Better with a closer version while we are on Java 8.
+    //    https://javaee.github.io/jaxb-v2/doc/user-guide/ch02.html#a-2-2-8
+    // 2. Neither com.sun.xml.bind:jaxb-core:2.2.8 nor com.sun.xml.bind:jaxb-impl:2.2.8 does not exist on Maven Central.
+    // 3. 2.2.11 looks to be used by the most Java libraries among JAXB 2.2.
+    //    https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api
+    //    https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-core
+    //    https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-impl
+    // 4. JAXB 2.2.8 and 2.2.11 look to have the same set of classes.
+    //    Although their internal implementations are a bit different, class loaders would not be confused.
+    compile "javax.xml.bind:jaxb-api:2.2.11"
+    compile "com.sun.xml.bind:jaxb-core:2.2.11"
+    compile "com.sun.xml.bind:jaxb-impl:2.2.11"
+
     testCompile "junit:junit:4.13.2"
     testCompile "org.embulk:embulk-core:0.10.31"
     testCompile "org.embulk:embulk-core:0.10.31:tests"
