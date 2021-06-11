@@ -285,7 +285,7 @@ public class S3FileOutputPlugin
         @Override
         public TaskReport commit()
         {
-            TaskReport report = Exec.newTaskReport();
+            TaskReport report = CONFIG_MAPPER_FACTORY.newTaskReport();
             return report;
         }
     }
@@ -312,8 +312,7 @@ public class S3FileOutputPlugin
 
         validateSequenceFormat(task);
 
-        // TODO: replace task.toTaskSource() after dropping v0.9
-        return resume(task.dump(), taskCount, control);
+        return resume(task.toTaskSource(), taskCount, control);
     }
 
     @Override
@@ -321,7 +320,7 @@ public class S3FileOutputPlugin
             Control control)
     {
         control.run(taskSource);
-        return Exec.newConfigDiff();
+        return CONFIG_MAPPER_FACTORY.newConfigDiff();
     }
 
     @Override
