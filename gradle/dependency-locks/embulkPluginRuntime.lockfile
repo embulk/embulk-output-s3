@@ -10,11 +10,8 @@ com.fasterxml.jackson.core:jackson-core:2.6.7
 com.fasterxml.jackson.core:jackson-databind:2.6.7.1
 com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.6.7
 com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7
-com.sun.xml.bind:jaxb-core:2.2.11
-com.sun.xml.bind:jaxb-impl:2.2.11
 commons-codec:commons-codec:1.9
 javax.validation:validation-api:1.1.0.Final
-javax.xml.bind:jaxb-api:2.2.11
 joda-time:joda-time:2.9.2
 org.apache.httpcomponents:httpclient:4.5.2
 org.apache.httpcomponents:httpcore:4.4.4

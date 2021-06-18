@@ -63,8 +63,12 @@ dependencies {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 
+    // TODO: Uncomment compile statement when updates aws-java-sdk-s3.
+    //       Current aws-java-sdk-s3:1.11.27 raises the following exception
+    //       java.lang.ExceptionInInitializerError
+    //       if write JAXB dependency explicitly.
+    //
     // Adding dependencies on JAXB explicitly.
-
     // JAXB 2.2.11 is chosen here because:
     // 1. JDK 8's bundled JAXB is 2.2.8. Better with a closer version while we are on Java 8.
     //    https://javaee.github.io/jaxb-v2/doc/user-guide/ch02.html#a-2-2-8
@@ -75,16 +79,15 @@ dependencies {
     //    https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-impl
     // 4. JAXB 2.2.8 and 2.2.11 look to have the same set of classes.
     //    Although their internal implementations are a bit different, class loaders would not be confused.
-    compile "javax.xml.bind:jaxb-api:2.2.11"
-    compile "com.sun.xml.bind:jaxb-core:2.2.11"
-    compile "com.sun.xml.bind:jaxb-impl:2.2.11"
+    // compile "javax.xml.bind:jaxb-api:2.2.11"
+    // compile "com.sun.xml.bind:jaxb-core:2.2.11"
+    // compile "com.sun.xml.bind:jaxb-impl:2.2.11"
 
     testCompile "junit:junit:4.13.2"
     testCompile "org.embulk:embulk-core:0.10.31"
     testCompile "org.embulk:embulk-core:0.10.31:tests"
     testCompile "org.embulk:embulk-spi:0.10.31"
     testCompile "org.embulk:embulk-api:0.10.31"
-    //testCompile  "org.embulk:embulk-standards:0.10.31"
 }
 
 checkstyle {
