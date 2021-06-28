@@ -2,15 +2,15 @@ plugins {
     id "java"
     id "checkstyle"
     id "maven-publish"
-//    id "signing"
+    id "signing"
     id "org.embulk.embulk-plugins" version "0.4.2"
 }
 repositories {
     mavenCentral()
 }
 
-group = "io.github.llibra"
-version = "1.5.0"
+group = "org.embulk"
+version = "1.6.0"
 description = "Stores files on S3."
 
 sourceCompatibility = 1.8
@@ -32,7 +32,7 @@ dependencies {
         exclude group: "commons-logging", module: "commons-logging"
     }
 
-    compile("org.embulk:embulk-util-config:0.3.0") {
+    compile("org.embulk:embulk-util-config:0.3.1") {
         // They conflict with embulk-core. They are once excluded here,
         // and added explicitly with versions exactly the same with embulk-core:0.10.19.
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
@@ -47,9 +47,9 @@ dependencies {
     // and added explicitly with versions exactly the same with embulk-core:0.10.19.
     compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
     compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
-    // embulk-output-s3 1.5.0 contains jackson-databind 2.6.7.1
-    // in the gem file even embulk-core uses 2.6.7.
-    // So, I write here exactly the same version explicitly for keep compatibility.
+    // "jackson-databind:2.6.7.1" is a little bit different from "embulk-core:0.10.31"'s dependency ("2.6.7"). But,
+    // "embulk-output-s3" had contained "jackson-databind:2.6.7.1", not "2.6.7", for a long time. It has been working.
+    // Keeping this "2.6.7.1" here for compatibility with older versions. It has no problems with Embulk v0.10.32+.
     compile "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
     compile "javax.validation:validation-api:1.1.0.Final"
@@ -63,10 +63,14 @@ dependencies {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 
-    // TODO: Uncomment compile statement when updates aws-java-sdk-s3.
-    //       Current aws-java-sdk-s3:1.11.27 raises the following exception
-    //       java.lang.ExceptionInInitializerError
-    //       if write JAXB dependency explicitly.
+    // TODO: Enable those JAXB dependencies.
+    //
+    // Including explicit JAXB dependencies would be needed to work with Java 9+. But they didn't work with aws-java-sdk-s3:1.11.271.
+    // On the other hand, upgrading aws-java-sdk has another compatibility risk.
+    //
+    // We decided to release one version without JAXB and AWS SDK upgrade, but only with v0.10 catch-up, at first.
+    // Then, we will release a next version both with JAXB and AWS SDK upgrade.
+    //
     //
     // Adding dependencies on JAXB explicitly.
     // JAXB 2.2.11 is chosen here because:
@@ -113,20 +117,16 @@ java {
 }
 
 jar {
-    from rootProject.file("LICENSE")
 }
 
 sourcesJar {
-    from rootProject.file("LICENSE")
 }
 
 javadocJar {
-    from rootProject.file("LICENSE")
 }
 
+// TODO: Enable those settings after append maven configuration.
 //signing {
-//    // https://docs.gradle.org/current/userguide/signing_plugin.html#sec:using_gpg_agent
-//    useGpgCmd()
 //    sign publishing.publications.maven
 //}
 
@@ -150,12 +150,11 @@ embulkPlugin {
 }
 
 gem {
-    from("LICENSE.txt")  // Optional -- if you need other files in the gem.
     authors = [ "Manabu Takayama" ]
     email = [ "learn.libra@gmail.com" ]
     // "description" of the gem is copied from "description" of your Gradle project.
     summary = "S3 file output plugin for Embulk"
-    homepage = "https://github.com/llibra/embulk-output-s3"
+    homepage = "https://github.com/embulk/embulk-output-s3"
     licenses = [ "MIT" ]
     //metadata = []  // Optional -- if you need metadata in the gem.
 }
