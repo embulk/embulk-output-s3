@@ -1,36 +1,98 @@
 plugins {
-    id "com.jfrog.bintray" version "1.1"
-    id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
     id "checkstyle"
+    id "maven-publish"
+    id "signing"
+    id "org.embulk.embulk-plugins" version "0.4.2"
 }
-import com.github.jrubygradle.JRubyExec
 repositories {
     mavenCentral()
-    jcenter()
-}
-configurations {
-    provided
 }
 
-version = "1.5.0"
+group = "org.embulk"
+version = "1.6.0"
+description = "Stores files on S3."
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.8.1"
-    provided "org.embulk:embulk-core:0.8.1"
-    compile  "com.amazonaws:aws-java-sdk-s3:1.11.271"
-    testCompile "junit:junit:4.+"
-}
+    compileOnly "org.embulk:embulk-spi:0.10.31"
+    compileOnly "org.embulk:embulk-api:0.10.31"
 
-task classpath(type: Copy, dependsOn: ["jar"]) {
-    doFirst { file("classpath").deleteDir() }
-    from (configurations.runtime - configurations.provided + files(jar.archivePath))
-    into "classpath"
+    compile("com.amazonaws:aws-java-sdk-s3:1.11.271") {
+        // They conflict with embulk-core. They are once excluded here,
+        // and added explicitly with versions exactly the same with embulk-core:0.10.19.
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "joda-time", module: "joda-time"
+
+        // commons-logging api is provided by jcl-over-slf4j below.
+        exclude group: "commons-logging", module: "commons-logging"
+    }
+
+    compile("org.embulk:embulk-util-config:0.3.1") {
+        // They conflict with embulk-core. They are once excluded here,
+        // and added explicitly with versions exactly the same with embulk-core:0.10.19.
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "com.fasterxml.jackson.datatype", module: "jackson-datatype-jdk8"
+        exclude group: "javax.validation", module: "validation-api"
+    }
+    compile "org.embulk:embulk-util-file:0.1.3"
+
+    // They are once excluded from transitive dependencies of other dependencies,
+    // and added explicitly with versions exactly the same with embulk-core:0.10.19.
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
+    // "jackson-databind:2.6.7.1" is a little bit different from "embulk-core:0.10.31"'s dependency ("2.6.7"). But,
+    // "embulk-output-s3" had contained "jackson-databind:2.6.7.1", not "2.6.7", for a long time. It has been working.
+    // Keeping this "2.6.7.1" here for compatibility with older versions. It has no problems with Embulk v0.10.32+.
+    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
+    compile "javax.validation:validation-api:1.1.0.Final"
+    compile "joda-time:joda-time:2.9.2"
+
+    compile("org.slf4j:jcl-over-slf4j:1.7.12") {
+        // commons-logging api is provided by jcl-over-slf4j below.
+        exclude group: "commons-logging", module: "commons-logging"
+
+        // slf4j-api conflicts with embulk-api. It should be excluded.
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+
+    // TODO: Enable those JAXB dependencies.
+    //
+    // Including explicit JAXB dependencies would be needed to work with Java 9+. But they didn't work with aws-java-sdk-s3:1.11.271.
+    // On the other hand, upgrading aws-java-sdk has another compatibility risk.
+    //
+    // We decided to release one version without JAXB and AWS SDK upgrade, but only with v0.10 catch-up, at first.
+    // Then, we will release a next version both with JAXB and AWS SDK upgrade.
+    //
+    //
+    // Adding dependencies on JAXB explicitly.
+    // JAXB 2.2.11 is chosen here because:
+    // 1. JDK 8's bundled JAXB is 2.2.8. Better with a closer version while we are on Java 8.
+    //    https://javaee.github.io/jaxb-v2/doc/user-guide/ch02.html#a-2-2-8
+    // 2. Neither com.sun.xml.bind:jaxb-core:2.2.8 nor com.sun.xml.bind:jaxb-impl:2.2.8 does not exist on Maven Central.
+    // 3. 2.2.11 looks to be used by the most Java libraries among JAXB 2.2.
+    //    https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api
+    //    https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-core
+    //    https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-impl
+    // 4. JAXB 2.2.8 and 2.2.11 look to have the same set of classes.
+    //    Although their internal implementations are a bit different, class loaders would not be confused.
+    // compile "javax.xml.bind:jaxb-api:2.2.11"
+    // compile "com.sun.xml.bind:jaxb-core:2.2.11"
+    // compile "com.sun.xml.bind:jaxb-impl:2.2.11"
+
+    testCompile "junit:junit:4.13.2"
+    testCompile "org.embulk:embulk-core:0.10.31"
+    testCompile "org.embulk:embulk-core:0.10.31:tests"
+    testCompile "org.embulk:embulk-spi:0.10.31"
+    testCompile "org.embulk:embulk-api:0.10.31"
 }
-clean { delete 'classpath' }
 
 checkstyle {
     configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
@@ -49,29 +111,56 @@ task checkstyle(type: Checkstyle) {
     source = sourceSets.main.allJava + sourceSets.test.allJava
 }
 
-task gem(type: JRubyExec, dependsOn: ["build", "gemspec", "classpath"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
-    script "build/gemspec"
-    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
-task gemspec << { file("build/gemspec").write($/
-Gem::Specification.new do |spec|
-  spec.name          = "${project.name}"
-  spec.version       = "${project.version}"
-  spec.authors       = ["Manabu Takayama"]
-  spec.summary       = %[S3 file output plugin for Embulk]
-  spec.description   = %[Stores files on S3.]
-  spec.email         = ["learn.libra@gmail.com"]
-  spec.licenses      = ["MIT"]
-  spec.homepage      = "https://github.com/llibra/embulk-output-s3"
+jar {
+}
 
-  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
-  spec.test_files    = spec.files.grep(%r"^(test|spec)/")
-  spec.require_paths = ["lib"]
+sourcesJar {
+}
 
-  spec.add_development_dependency 'bundler', ['~> 1.0']
-  spec.add_development_dependency 'rake', ['>= 10.0']
-end
-/$)
+javadocJar {
+}
+
+// TODO: Enable those settings after append maven configuration.
+//signing {
+//    sign publishing.publications.maven
+//}
+
+publishing {
+    publications {
+        embulkPluginMaven(MavenPublication) {  // Publish it with "publishEmbulkPluginMavenPublicationToMavenRepository".
+            from components.java  // Must be "components.java". The dependency modification works only for it.
+        }
+    }
+    repositories {
+        maven {
+            url = "${project.buildDir}/mavenPublishLocal"
+        }
+    }
+}
+
+embulkPlugin {
+    mainClass = "org.embulk.output.S3FileOutputPlugin"
+    category = "output"
+    type = "s3"
+}
+
+gem {
+    authors = [ "Manabu Takayama" ]
+    email = [ "learn.libra@gmail.com" ]
+    // "description" of the gem is copied from "description" of your Gradle project.
+    summary = "S3 file output plugin for Embulk"
+    homepage = "https://github.com/embulk/embulk-output-s3"
+    licenses = [ "MIT" ]
+    //metadata = []  // Optional -- if you need metadata in the gem.
+}
+gemPush {
+    host = "https://rubygems.org"
+}
+tasks.withType(JavaCompile) {
+  options.compilerArgs << '-Xlint:deprecation'
 }

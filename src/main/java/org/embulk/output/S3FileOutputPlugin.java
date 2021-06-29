@@ -9,12 +9,14 @@ import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
 
-import org.embulk.config.Config;
-import org.embulk.config.ConfigDefault;
+import org.embulk.util.config.Config;
+import org.embulk.util.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
-import org.embulk.config.Task;
+import org.embulk.util.config.ConfigMapper;
+import org.embulk.util.config.ConfigMapperFactory;
+import org.embulk.util.config.Task;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.Buffer;
@@ -22,6 +24,7 @@ import org.embulk.spi.Exec;
 import org.embulk.spi.FileOutput;
 import org.embulk.spi.FileOutputPlugin;
 import org.embulk.spi.TransactionalFileOutput;
+import org.embulk.util.config.TaskMapper;
 import org.slf4j.Logger;
 
 import com.amazonaws.ClientConfiguration;
@@ -29,11 +32,20 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.google.common.base.Optional;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 public class S3FileOutputPlugin
         implements FileOutputPlugin
 {
+    private static final Logger logger = LoggerFactory.getLogger(S3FileOutputPlugin.class);
+    private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ConfigMapperFactory
+            .builder()
+            .addDefaultModules()
+            .build();
+    private static final ConfigMapper CONFIG_MAPPER = CONFIG_MAPPER_FACTORY.createConfigMapper();
+
     public interface PluginTask
             extends Task
     {
@@ -87,8 +99,6 @@ public class S3FileOutputPlugin
             implements FileOutput,
             TransactionalFileOutput
     {
-        private final Logger log = Exec.getLogger(S3FileOutputPlugin.class);
-
         private final String bucket;
         private final String pathPrefix;
         private final String sequenceFormat;
@@ -156,7 +166,8 @@ public class S3FileOutputPlugin
         {
             if (tmpDir == null) {
                 return Files.createTempFile(prefix, null);
-            } else {
+            }
+            else {
                 return Files.createTempFile(Paths.get(tmpDir), prefix, null);
             }
         }
@@ -224,7 +235,7 @@ public class S3FileOutputPlugin
             try {
                 tempFilePath = newTempFile(tempPath, tempPathPrefix);
 
-                log.info("Writing S3 file '{}'", buildCurrentKey());
+                logger.info("Writing S3 file '{}'", buildCurrentKey());
 
                 current = Files.newOutputStream(tempFilePath);
             }
@@ -274,7 +285,7 @@ public class S3FileOutputPlugin
         @Override
         public TaskReport commit()
         {
-            TaskReport report = Exec.newTaskReport();
+            TaskReport report = CONFIG_MAPPER_FACTORY.newTaskReport();
             return report;
         }
     }
@@ -297,11 +308,11 @@ public class S3FileOutputPlugin
     public ConfigDiff transaction(ConfigSource config, int taskCount,
             Control control)
     {
-        PluginTask task = config.loadConfig(PluginTask.class);
+        final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
 
         validateSequenceFormat(task);
 
-        return resume(task.dump(), taskCount, control);
+        return resume(task.toTaskSource(), taskCount, control);
     }
 
     @Override
@@ -309,7 +320,7 @@ public class S3FileOutputPlugin
             Control control)
     {
         control.run(taskSource);
-        return Exec.newConfigDiff();
+        return CONFIG_MAPPER_FACTORY.newConfigDiff();
     }
 
     @Override
@@ -321,7 +332,8 @@ public class S3FileOutputPlugin
     @Override
     public TransactionalFileOutput open(TaskSource taskSource, int taskIndex)
     {
-        PluginTask task = taskSource.loadTask(PluginTask.class);
+        final TaskMapper taskMapper = CONFIG_MAPPER_FACTORY.createTaskMapper();
+        final PluginTask task = taskMapper.map(taskSource, PluginTask.class);
 
         return new S3FileOutput(task, taskIndex);
     }
