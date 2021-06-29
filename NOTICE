@@ -1,0 +1,6 @@
+embulk-output-s3
+Copyright 2015 Manabu Takayama, and the Embulk project
+
+This product includes software developed by Manabu Takayama, and in a part of the Embulk project (https://www.embulk.org/).
+It was originally developed by Manabu Takayama (https://github.com/llibra), and then transferred to the Embulk project.
+It was originally licenced under the MIT License before the transfer, and it is now licensed under the Apache Software License, Version 2.0.
