@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.output;
+package org.embulk.output.s3;
 
 import java.io.IOException;
 import java.io.OutputStream;
