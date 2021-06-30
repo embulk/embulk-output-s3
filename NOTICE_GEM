@@ -23,7 +23,7 @@ It is licensed under the Apache Software License, Version 2.0.
 The gem distribution of this product includes a JAR of the Apache HttpClient 4.5 (http://hc.apache.org/httpcomponents-client-4.5.x/index.html), as-is.
 It is licensed under the Apache Software License, Version 2.0.
 
-The gem distribution of this product includes a JAR of the Apache HttpCore 4.5 (http://hc.apache.org/httpcomponents-core-4.4.x/index.html), as-is.
+The gem distribution of this product includes a JAR of the Apache HttpCore 4.4 (http://hc.apache.org/httpcomponents-core-4.4.x/index.html), as-is.
 It is licensed under the Apache Software License, Version 2.0.
 
 The gem distribution of this product includes a JAR of the JCL 1.2 implemented over SLF4J (http://www.slf4j.org/legacy.html) 1.7, as-is.

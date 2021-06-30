@@ -11,7 +11,7 @@ repositories {
 }
 
 group = "org.embulk"
-version = "1.6.0-SNAPSHOT"
+version = "1.7.0-SNAPSHOT"
 description = "Stores files on S3."
 
 sourceCompatibility = 1.8
@@ -31,7 +31,7 @@ dependencies {
     compileOnly "org.embulk:embulk-spi:0.10.31"
     compileOnly "org.embulk:embulk-api:0.10.31"
 
-    compile("com.amazonaws:aws-java-sdk-s3:1.11.271") {
+    compile("com.amazonaws:aws-java-sdk-s3:1.11.1034") {
         // Jackson libraries conflict with embulk-core before v0.10.32.
         // They are once excluded here, and re-added explicitly below.
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
@@ -66,6 +66,9 @@ dependencies {
     // "jackson-databind:2.6.7.1" is a little bit different from "embulk-core:0.10.31"'s dependency ("2.6.7"). But,
     // "embulk-output-s3" had contained "jackson-databind:2.6.7.1", not "2.6.7", for a long time. It has been working.
     // Keeping this "2.6.7.1" here for compatibility with older versions. It has no problems with Embulk v0.10.32+.
+    //
+    // "aws-java-sdk-s3:1.11.1034" depends on "jackson-databind:2.6.7.4", not "2.6.7.1", but keeping it with "2.6.7.1"
+    // until Embulk v0.11 gets widely used.
     compile "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
 
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
@@ -83,14 +86,6 @@ dependencies {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 
-    // TODO: Enable those JAXB dependencies.
-    //
-    // Including explicit JAXB dependencies would be needed to work with Java 9+. But they didn't work with aws-java-sdk-s3:1.11.271.
-    // On the other hand, upgrading aws-java-sdk has another compatibility risk.
-    //
-    // We decided to release one version without JAXB and AWS SDK upgrade, but only with v0.10 catch-up, at first.
-    // Then, we will release a next version both with JAXB and AWS SDK upgrade.
-    //
     // Adding dependencies on JAXB explicitly.
     // JAXB 2.2.11 is chosen here because:
     // 1. JDK 8's bundled JAXB is 2.2.8. Better with a closer version while we are on Java 8.
@@ -102,9 +97,9 @@ dependencies {
     //    https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-impl
     // 4. JAXB 2.2.8 and 2.2.11 look to have the same set of classes.
     //    Although their internal implementations are a bit different, class loaders would not be confused.
-    // compile "javax.xml.bind:jaxb-api:2.2.11"
-    // compile "com.sun.xml.bind:jaxb-core:2.2.11"
-    // compile "com.sun.xml.bind:jaxb-impl:2.2.11"
+    compile "javax.xml.bind:jaxb-api:2.2.11"
+    compile "com.sun.xml.bind:jaxb-core:2.2.11"
+    compile "com.sun.xml.bind:jaxb-impl:2.2.11"
 
     testCompile "junit:junit:4.13.2"
     testCompile "org.embulk:embulk-core:0.10.31"
