@@ -112,7 +112,7 @@ dependencies {
 }
 
 embulkPlugin {
-    mainClass = "org.embulk.output.S3FileOutputPlugin"
+    mainClass = "org.embulk.output.s3.S3FileOutputPlugin"
     category = "output"
     type = "s3"
 }
