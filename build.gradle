@@ -124,6 +124,21 @@ javadoc {
     }
 }
 
+jar {
+    from rootProject.file("LICENSE")
+    from rootProject.file("NOTICE")
+}
+
+sourcesJar {
+    from rootProject.file("LICENSE")
+    from rootProject.file("NOTICE")
+}
+
+javadocJar {
+    from rootProject.file("LICENSE")
+    from rootProject.file("NOTICE")
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
@@ -144,8 +159,8 @@ publishing {
                 licenses {
                     license {
                         // http://central.sonatype.org/pages/requirements.html#license-information
-                        name = "MIT License"
-                        url = "http://www.opensource.org/licenses/mit-license.php"
+                        name = "The Apache License, Version 2.0"
+                        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
                     }
                 }
 
@@ -187,7 +202,11 @@ gem {
     email = [ "learn.libra@gmail.com" ]
     summary = "S3 file output plugin for Embulk"
     homepage = "https://github.com/embulk/embulk-output-s3"
-    licenses = [ "MIT" ]
+    licenses = [ "Apache-2.0" ]
+
+    from rootProject.file("LICENSE")
+    from rootProject.file("NOTICE_GEM")
+    rename ("NOTICE_GEM", "NOTICE")
 }
 
 gemPush {
