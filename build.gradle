@@ -165,6 +165,26 @@ publishing {
                 }
 
                 developers {
+                    developer {
+                        name = "Manabu Takayama"
+                        email = "learn.libra@gmail.com"
+                    }
+                    developer {
+                        name = "Toyama Hiroshi"
+                        email = "toyama0919@gmail.com"
+                    }
+                    developer {
+                        name = "Civitaspo"
+                        email = "civitaspo@gmail.com"
+                    }
+                    developer {
+                        name = "Shohei Sutoh"
+                        email = "ss.aquari@gmail.com"
+                    }
+                    developer {
+                        name = "Hiroyuki Sato"
+                        email = "hiroysato@gmail.com"
+                    }
                 }
 
                 scm {
