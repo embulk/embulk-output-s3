@@ -48,6 +48,8 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
@@ -81,6 +83,10 @@ public class S3FileOutputPlugin
         @Config("endpoint")
         @ConfigDefault("null")
         Optional<String> getEndpoint();
+
+        @Config("region")
+        @ConfigDefault("null")
+        Optional<String> getRegion();
 
         @Config("access_key_id")
         @ConfigDefault("null")
@@ -157,6 +163,10 @@ public class S3FileOutputPlugin
 
             if (task.getEndpoint().isPresent()) {
                 client.setEndpoint(task.getEndpoint().get());
+            }
+
+            if (task.getRegion().isPresent()) {
+                client.setRegion(Region.getRegion(Regions.fromName(task.getRegion().get())));
             }
 
             return client;
