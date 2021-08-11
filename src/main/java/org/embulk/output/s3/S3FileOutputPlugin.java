@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import org.slf4j.LoggerFactory;
@@ -109,6 +110,10 @@ public class S3FileOutputPlugin
         @Config("canned_acl")
         @ConfigDefault("null")
         Optional<CannedAccessControlList> getCannedAccessControlList();
+
+        @Config("use_path_style")
+        @ConfigDefault("false")
+        Optional<Boolean> getUsePathStyle();
     }
 
     public static class S3FileOutput
@@ -157,6 +162,12 @@ public class S3FileOutputPlugin
 
             if (task.getEndpoint().isPresent()) {
                 client.setEndpoint(task.getEndpoint().get());
+            }
+
+            if (task.getUsePathStyle().isPresent()) {
+                if (task.getUsePathStyle().get()) {
+                    client.setS3ClientOptions(new S3ClientOptions().withPathStyleAccess(true));
+                }
             }
 
             return client;
