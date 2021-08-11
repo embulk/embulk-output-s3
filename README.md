@@ -25,6 +25,7 @@
 - **tmp_path**: temporary file directory. If null, it is associated with the default FileSystem. (string, default: null)
 - **tmp_path_prefix**: prefix of temporary files (string, default: 'embulk-output-s3-')
 - **canned_acl**: canned access control list for created objects ([enum](#cannedaccesscontrollist), default: null)
+- **use_path_style**: use path style request. This option is useful for S3 compatible storage such as minIO. (default: false)
 - **proxy_host**: proxy host to use when accessing AWS S3 via proxy. (string, default: null )
 - **proxy_port**: proxy port to use when accessing AWS S3 via proxy. (string, default: null )
 
