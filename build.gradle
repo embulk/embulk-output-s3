@@ -46,6 +46,29 @@ dependencies {
         exclude group: "commons-logging", module: "commons-logging"
     }
 
+    compile("com.amazonaws:aws-java-sdk-sts:1.11.466") {
+        // They conflict with embulk-core. They are once excluded here,
+        // and added explicitly with versions exactly the same with embulk-core:0.10.29.
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "joda-time", module: "joda-time"
+
+        // commons-logging api is provided by jcl-over-slf4j below.
+        exclude group: "commons-logging", module: "commons-logging"
+    }
+
+    compile("org.embulk:embulk-util-aws-credentials:0.4.1") {
+        // They conflict with embulk-core. They are once excluded here,
+        // and added explicitly with versions exactly the same with embulk-core:0.10.29.
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "com.fasterxml.jackson.datatype", module: "jackson-datatype-jdk8"
+        exclude group: "javax.validation", module: "validation-api"
+        exclude group: "joda-time", module: "joda-time"
+    }
+
     compile("org.embulk:embulk-util-config:0.3.1") {
         // Jackson libraries conflict with embulk-core before v0.10.32.
         // They are once excluded here, and re-added explicitly below.
