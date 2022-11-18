@@ -25,6 +25,7 @@ import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
 
+import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.retry.PredefinedRetryPolicies;
@@ -86,6 +87,11 @@ public class S3FileOutputPlugin
         @Config("endpoint")
         @ConfigDefault("null")
         Optional<String> getEndpoint();
+
+        @Config("http_proxy")
+        @ConfigDefault("null")
+        Optional<HttpProxy> getHttpProxy();
+        void setHttpProxy(Optional<HttpProxy> httpProxy);
 
         @Config("proxy_host")
         @ConfigDefault("null")
@@ -185,8 +191,36 @@ public class S3FileOutputPlugin
             clientConfig.setMaxConnections(50); // SDK default: 50
             clientConfig.setSocketTimeout(8 * 60 * 1000); // SDK default: 50*1000
             clientConfig.setRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY);
+            // set http proxy
+            if (task.getHttpProxy().isPresent()) {
+                setHttpProxyInAwsClient(clientConfig, task.getHttpProxy().get());
+            }
 
             return clientConfig;
+        }
+
+        private void setHttpProxyInAwsClient(ClientConfiguration clientConfig, HttpProxy httpProxy)
+        {
+            // host
+            clientConfig.setProxyHost(httpProxy.getHost());
+
+            // port
+            if (httpProxy.getPort().isPresent()) {
+                clientConfig.setProxyPort(httpProxy.getPort().get());
+            }
+
+            // https
+            clientConfig.setProtocol(httpProxy.getHttps() ? Protocol.HTTPS : Protocol.HTTP);
+
+            // user
+            if (httpProxy.getUser().isPresent()) {
+                clientConfig.setProxyUsername(httpProxy.getUser().get());
+            }
+
+            // password
+            if (httpProxy.getPassword().isPresent()) {
+                clientConfig.setProxyPassword(httpProxy.getPassword().get());
+            }
         }
 
         public S3FileOutput(PluginTask task, int taskIndex)
