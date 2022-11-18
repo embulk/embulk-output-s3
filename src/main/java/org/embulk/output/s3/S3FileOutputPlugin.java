@@ -49,7 +49,6 @@ import org.embulk.util.config.TaskMapper;
 import org.slf4j.Logger;
 
 import com.amazonaws.ClientConfiguration;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import org.embulk.util.aws.credentials.AwsCredentials;
@@ -126,7 +125,7 @@ public class S3FileOutputPlugin
 
         private int taskIndex;
         private int fileIndex;
-        private AmazonS3Client client;
+        private AmazonS3 client;
         private OutputStream current;
         private Path tempFilePath;
         private String tempPath = null;
@@ -189,42 +188,6 @@ public class S3FileOutputPlugin
 
             return clientConfig;
         }
-
-
-
-
-        // private static AmazonS3Client newS3Client(PluginTask task)
-        // {
-        //     AmazonS3Client client;
-
-        //     // TODO: Support more configurations.
-        //     ClientConfiguration config = new ClientConfiguration();
-
-        //     if (task.getProxyHost().isPresent()) {
-        //         config.setProxyHost(task.getProxyHost().get());
-        //     }
-
-        //     if (task.getProxyPort().isPresent()) {
-        //         config.setProxyPort(task.getProxyPort().get());
-        //     }
-
-        //     if (task.getAccessKeyId().isPresent()) {
-        //         BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
-        //                 task.getAccessKeyId().get(), task.getSecretAccessKey().get());
-
-        //         client = new AmazonS3Client(basicAWSCredentials, config);
-        //     }
-        //     else {
-        //         // Use default credential provider chain.
-        //         client = new AmazonS3Client(config);
-        //     }
-
-        //     if (task.getEndpoint().isPresent()) {
-        //         client.setEndpoint(task.getEndpoint().get());
-        //     }
-
-        //     return client;
-        // }
 
         public S3FileOutput(PluginTask task, int taskIndex)
         {
