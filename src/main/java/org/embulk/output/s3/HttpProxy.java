@@ -18,10 +18,12 @@ public interface HttpProxy
 {
     @Config("host")
     String getHost();
+    void setHost(String host);
 
     @Config("port")
     @ConfigDefault("null")
     Optional<Integer> getPort();
+    void setPort(Optional<Integer> host);
 
     @Config("https")
     @ConfigDefault("true")

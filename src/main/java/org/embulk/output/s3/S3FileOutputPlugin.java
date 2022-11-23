@@ -191,13 +191,40 @@ public class S3FileOutputPlugin
             clientConfig.setMaxConnections(50); // SDK default: 50
             clientConfig.setSocketTimeout(8 * 60 * 1000); // SDK default: 50*1000
             clientConfig.setRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY);
+
             // set http proxy
+            // backward compatibility
+            if (task.getProxyHost().isPresent() || task.getProxyPort().isPresent()){
+                if (!task.getHttpProxy().isPresent()){
+                    TaskMapper taskMapper = CONFIG_MAPPER_FACTORY.createTaskMapper();
+                    HttpProxy httpProxy = taskMapper.map(CONFIG_MAPPER_FACTORY.newTaskSource(), HttpProxy.class);
+                    task.setHttpProxy(Optional.of(httpProxy));
+                }
+            }
+
+            if (task.getProxyHost().isPresent()){
+                HttpProxy httpProxy = task.getHttpProxy().get();
+                if (httpProxy.getHost().isEmpty()){
+                    httpProxy.setHost(task.getProxyHost().get());
+                    task.setHttpProxy(Optional.of(httpProxy));
+                }
+            }
+
+            if (task.getProxyPort().isPresent()){
+                HttpProxy httpProxy = task.getHttpProxy().get();
+                if (!httpProxy.getPort().isPresent()){
+                    httpProxy.setPort(task.getProxyPort());
+                    task.setHttpProxy(Optional.of(httpProxy));
+                }
+            }
+
             if (task.getHttpProxy().isPresent()) {
                 setHttpProxyInAwsClient(clientConfig, task.getHttpProxy().get());
             }
 
             return clientConfig;
         }
+
 
         private void setHttpProxyInAwsClient(ClientConfiguration clientConfig, HttpProxy httpProxy)
         {
