@@ -178,7 +178,6 @@ public class S3FileOutputPlugin
             return builder.build();
         }
 
-
         private AWSCredentialsProvider getCredentialsProvider(PluginTask task)
         {
             return AwsCredentials.getAWSCredentialsProvider(task);
@@ -194,25 +193,25 @@ public class S3FileOutputPlugin
 
             // set http proxy
             // backward compatibility
-            if (task.getProxyHost().isPresent() || task.getProxyPort().isPresent()){
-                if (!task.getHttpProxy().isPresent()){
-                    TaskMapper taskMapper = CONFIG_MAPPER_FACTORY.createTaskMapper();
-                    HttpProxy httpProxy = taskMapper.map(CONFIG_MAPPER_FACTORY.newTaskSource(), HttpProxy.class);
+            if (task.getProxyHost().isPresent()) {
+                if (!task.getHttpProxy().isPresent()) {
+                    ConfigMapper configMapper = CONFIG_MAPPER_FACTORY.createConfigMapper();
+                    ConfigSource configSource = CONFIG_MAPPER_FACTORY.newConfigSource();
+                    configSource.set("host", task.getProxyHost().get());
+                    HttpProxy httpProxy = configMapper.map(configSource, HttpProxy.class);
                     task.setHttpProxy(Optional.of(httpProxy));
+                }else{
+                    HttpProxy httpProxy = task.getHttpProxy().get();
+                    if (httpProxy.getHost().isEmpty()) {
+                        httpProxy.setHost(task.getProxyHost().get());
+                        task.setHttpProxy(Optional.of(httpProxy));
+                    }
                 }
             }
 
-            if (task.getProxyHost().isPresent()){
+            if (task.getProxyPort().isPresent()) {
                 HttpProxy httpProxy = task.getHttpProxy().get();
-                if (httpProxy.getHost().isEmpty()){
-                    httpProxy.setHost(task.getProxyHost().get());
-                    task.setHttpProxy(Optional.of(httpProxy));
-                }
-            }
-
-            if (task.getProxyPort().isPresent()){
-                HttpProxy httpProxy = task.getHttpProxy().get();
-                if (!httpProxy.getPort().isPresent()){
+                if (!httpProxy.getPort().isPresent()) {
                     httpProxy.setPort(task.getProxyPort());
                     task.setHttpProxy(Optional.of(httpProxy));
                 }
@@ -225,9 +224,7 @@ public class S3FileOutputPlugin
             return clientConfig;
         }
 
-
-        private void setHttpProxyInAwsClient(ClientConfiguration clientConfig, HttpProxy httpProxy)
-        {
+        private void setHttpProxyInAwsClient(ClientConfiguration clientConfig, HttpProxy httpProxy) {
             // host
             clientConfig.setProxyHost(httpProxy.getHost());
 
