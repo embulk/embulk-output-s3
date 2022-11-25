@@ -25,6 +25,12 @@ import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
 
+import com.amazonaws.Protocol;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.retry.PredefinedRetryPolicies;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.embulk.util.config.Config;
 import org.embulk.util.config.ConfigDefault;
 import org.embulk.config.ConfigDiff;
@@ -44,10 +50,10 @@ import org.embulk.util.config.TaskMapper;
 import org.slf4j.Logger;
 
 import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import org.embulk.util.aws.credentials.AwsCredentials;
+import org.embulk.util.aws.credentials.AwsCredentialsTask;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
@@ -63,7 +69,7 @@ public class S3FileOutputPlugin
     private static final ConfigMapper CONFIG_MAPPER = CONFIG_MAPPER_FACTORY.createConfigMapper();
 
     public interface PluginTask
-            extends Task
+            extends AwsCredentialsTask, Task
     {
         @Config("path_prefix")
         String getPathPrefix();
@@ -82,13 +88,10 @@ public class S3FileOutputPlugin
         @ConfigDefault("null")
         Optional<String> getEndpoint();
 
-        @Config("access_key_id")
+        @Config("http_proxy")
         @ConfigDefault("null")
-        Optional<String> getAccessKeyId();
-
-        @Config("secret_access_key")
-        @ConfigDefault("null")
-        Optional<String> getSecretAccessKey();
+        Optional<HttpProxy> getHttpProxy();
+        void setHttpProxy(Optional<HttpProxy> httpProxy);
 
         @Config("proxy_host")
         @ConfigDefault("null")
@@ -109,6 +112,10 @@ public class S3FileOutputPlugin
         @Config("canned_acl")
         @ConfigDefault("null")
         Optional<CannedAccessControlList> getCannedAccessControlList();
+
+        @Config("region")
+        @ConfigDefault("null")
+        Optional<String> getRegion();
     }
 
     public static class S3FileOutput
@@ -124,42 +131,122 @@ public class S3FileOutputPlugin
 
         private int taskIndex;
         private int fileIndex;
-        private AmazonS3Client client;
+        private AmazonS3 client;
         private OutputStream current;
         private Path tempFilePath;
         private String tempPath = null;
 
-        private static AmazonS3Client newS3Client(PluginTask task)
+        private AmazonS3 newS3Client(final PluginTask task)
         {
-            AmazonS3Client client;
+            Optional<String> endpoint = task.getEndpoint();
+            Optional<String> region = task.getRegion();
 
-            // TODO: Support more configurations.
-            ClientConfiguration config = new ClientConfiguration();
+            final AmazonS3ClientBuilder builder = AmazonS3ClientBuilder
+                    .standard()
+                    .withCredentials(getCredentialsProvider(task))
+                    .withClientConfiguration(getClientConfiguration(task));
 
+            // Favor the `endpoint` configuration, then `region`, if both are absent then `s3.amazonaws.com` will be used.
+            if (endpoint.isPresent()) {
+                if (region.isPresent()) {
+                    logger.warn("Either configure endpoint or region, " +
+                            "if both is specified only the endpoint will be in effect.");
+                }
+                builder.setEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint.get(), null));
+            }
+            else if (region.isPresent()) {
+                builder.setRegion(region.get());
+            }
+            else {
+                // This is to keep the AWS SDK upgrading to 1.11.x to be backward compatible with old configuration.
+                //
+                // On SDK 1.10.x, when neither endpoint nor region is set explicitly, the client's endpoint will be by
+                // default `s3.amazonaws.com`. And for pre-Signature-V4, this will work fine as the bucket's region
+                // will be resolved to the appropriate region on server (AWS) side.
+                //
+                // On SDK 1.11.x, a region will be computed on client side by AwsRegionProvider and the endpoint now will
+                // be region-specific `<region>.s3.amazonaws.com` and might be the wrong one.
+                //
+                // So a default endpoint of `s3.amazonaws.com` when both endpoint and region configs are absent are
+                // necessary to make old configurations won't suddenly break. The side effect is that this will render
+                // AwsRegionProvider useless. And it's worth to note that Signature-V4 won't work with either versions with
+                // no explicit region or endpoint as the region (inferrable from endpoint) are necessary for signing.
+                builder.setEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("s3.amazonaws.com", null));
+            }
+
+            builder.withForceGlobalBucketAccessEnabled(true);
+            return builder.build();
+        }
+
+        private AWSCredentialsProvider getCredentialsProvider(PluginTask task)
+        {
+            return AwsCredentials.getAWSCredentialsProvider(task);
+        }
+
+        private ClientConfiguration getClientConfiguration(PluginTask task)
+        {
+            ClientConfiguration clientConfig = new ClientConfiguration();
+
+            clientConfig.setMaxConnections(50); // SDK default: 50
+            clientConfig.setSocketTimeout(8 * 60 * 1000); // SDK default: 50*1000
+            clientConfig.setRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY);
+
+            // set http proxy
+            // backward compatibility
             if (task.getProxyHost().isPresent()) {
-                config.setProxyHost(task.getProxyHost().get());
+                logger.warn("proxy_host is deprecated. use http_proxy.host instead");
+                if (!task.getHttpProxy().isPresent()) {
+                    ConfigMapper configMapper = CONFIG_MAPPER_FACTORY.createConfigMapper();
+                    ConfigSource configSource = CONFIG_MAPPER_FACTORY.newConfigSource();
+                    configSource.set("host", task.getProxyHost().get());
+                    HttpProxy httpProxy = configMapper.map(configSource, HttpProxy.class);
+                    task.setHttpProxy(Optional.of(httpProxy));
+                }else{
+                    HttpProxy httpProxy = task.getHttpProxy().get();
+                    if (httpProxy.getHost().isEmpty()) {
+                        httpProxy.setHost(task.getProxyHost().get());
+                        task.setHttpProxy(Optional.of(httpProxy));
+                    }
+                }
             }
 
             if (task.getProxyPort().isPresent()) {
-                config.setProxyPort(task.getProxyPort().get());
+                logger.warn("proxy_port is deprecated. use http_proxy.port instead");
+                HttpProxy httpProxy = task.getHttpProxy().get();
+                if (!httpProxy.getPort().isPresent()) {
+                    httpProxy.setPort(task.getProxyPort());
+                    task.setHttpProxy(Optional.of(httpProxy));
+                }
             }
 
-            if (task.getAccessKeyId().isPresent()) {
-                BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
-                        task.getAccessKeyId().get(), task.getSecretAccessKey().get());
-
-                client = new AmazonS3Client(basicAWSCredentials, config);
-            }
-            else {
-                // Use default credential provider chain.
-                client = new AmazonS3Client(config);
+            if (task.getHttpProxy().isPresent()) {
+                setHttpProxyInAwsClient(clientConfig, task.getHttpProxy().get());
             }
 
-            if (task.getEndpoint().isPresent()) {
-                client.setEndpoint(task.getEndpoint().get());
+            return clientConfig;
+        }
+
+        private void setHttpProxyInAwsClient(ClientConfiguration clientConfig, HttpProxy httpProxy) {
+            // host
+            clientConfig.setProxyHost(httpProxy.getHost());
+
+            // port
+            if (httpProxy.getPort().isPresent()) {
+                clientConfig.setProxyPort(httpProxy.getPort().get());
             }
 
-            return client;
+            // https
+            clientConfig.setProtocol(httpProxy.getHttps() ? Protocol.HTTPS : Protocol.HTTP);
+
+            // user
+            if (httpProxy.getUser().isPresent()) {
+                clientConfig.setProxyUsername(httpProxy.getUser().get());
+            }
+
+            // password
+            if (httpProxy.getPassword().isPresent()) {
+                clientConfig.setProxyPassword(httpProxy.getPassword().get());
+            }
         }
 
         public S3FileOutput(PluginTask task, int taskIndex)
