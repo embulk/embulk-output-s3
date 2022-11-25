@@ -211,7 +211,7 @@ public class S3FileOutputPlugin
             }
 
             if (task.getProxyPort().isPresent()) {
-                logger.warn("proxy_port is deprecated. use http_proxy.port instead");
+                logger.warn("Configuration with \"proxy_port\" is deprecated. Use \"http_proxy.port\" instead.");
                 HttpProxy httpProxy = task.getHttpProxy().get();
                 if (!httpProxy.getPort().isPresent()) {
                     httpProxy.setPort(task.getProxyPort());
