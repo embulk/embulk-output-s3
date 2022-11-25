@@ -27,12 +27,12 @@
 - **canned_acl**: canned access control list for created objects ([enum](#cannedaccesscontrollist), default: null)
 - [Deprecated] **proxy_host**: proxy host to use when accessing AWS S3 via proxy. (string, default: null )
 - [Deprecated] **proxy_port**: proxy port to use when accessing AWS S3 via proxy. (string, default: null )
-- **http_proxy** http proxy configuration to use when accessing AWS S3 via http proxy. (optional)
-  - **host** proxy host (string, required)
-  - **port** proxy port (int, optional)
-  - **https** use https or not (boolean, default true)
-  - **user** proxy user (string, optional)
-  - **password** proxy password (string, optional)
+- **http_proxy**: http proxy configuration to use when accessing AWS S3 via http proxy. (optional)
+  - **host**: proxy host (string, required)
+  - **port**: proxy port (int, optional)
+  - **https**: use https or not (boolean, default true)
+  - **user**: proxy user (string, optional)
+  - **password**: proxy password (string, optional)
 
 - **auth_method**: name of mechanism to authenticate requests (basic, env, instance, profile, properties, anonymous, or session. default: basic)
 
