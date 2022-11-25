@@ -201,7 +201,7 @@ public class S3FileOutputPlugin
                     configSource.set("host", task.getProxyHost().get());
                     HttpProxy httpProxy = configMapper.map(configSource, HttpProxy.class);
                     task.setHttpProxy(Optional.of(httpProxy));
-                }else{
+                } else {
                     HttpProxy httpProxy = task.getHttpProxy().get();
                     if (httpProxy.getHost().isEmpty()) {
                         httpProxy.setHost(task.getProxyHost().get());
