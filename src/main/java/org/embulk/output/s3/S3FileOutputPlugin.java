@@ -194,7 +194,7 @@ public class S3FileOutputPlugin
             // set http proxy
             // backward compatibility
             if (task.getProxyHost().isPresent()) {
-                logger.warn("proxy_host is deprecated. use http_proxy.host instead");
+                logger.warn("Configuration with \"proxy_host\" is deprecated. Use \"http_proxy.host\" instead.");
                 if (!task.getHttpProxy().isPresent()) {
                     ConfigMapper configMapper = CONFIG_MAPPER_FACTORY.createConfigMapper();
                     ConfigSource configSource = CONFIG_MAPPER_FACTORY.newConfigSource();
