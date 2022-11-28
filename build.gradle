@@ -1,9 +1,9 @@
 plugins {
     id "java"
-    id "checkstyle"
     id "maven-publish"
     id "signing"
     id "org.embulk.embulk-plugins" version "0.4.2"
+    id "checkstyle"
 }
 
 repositories {
@@ -14,8 +14,8 @@ group = "org.embulk"
 version = "1.7.1-SNAPSHOT"
 description = "Stores files on S3."
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
@@ -249,6 +249,19 @@ gem {
 
 gemPush {
     host = "https://rubygems.org"
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+        outputs.upToDateWhen { false }
+    }
 }
 
 checkstyle {
