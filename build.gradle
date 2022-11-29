@@ -143,18 +143,24 @@ javadoc {
 }
 
 jar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 sourcesJar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 javadocJar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 publishing {
