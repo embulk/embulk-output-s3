@@ -2,7 +2,7 @@ plugins {
     id "java"
     id "maven-publish"
     id "signing"
-    id "org.embulk.embulk-plugins" version "0.5.3"
+    id "org.embulk.embulk-plugins" version "0.5.5"
     id "checkstyle"
 }
 
