@@ -11,7 +11,7 @@ repositories {
 }
 
 group = "org.embulk"
-version = "1.7.1-SNAPSHOT"
+version = "1.7.1"
 description = "Stores files on S3."
 
 sourceCompatibility = JavaVersion.VERSION_1_8
