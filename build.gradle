@@ -1,9 +1,9 @@
 plugins {
     id "java"
-    id "checkstyle"
     id "maven-publish"
     id "signing"
-    id "org.embulk.embulk-plugins" version "0.4.2"
+    id "org.embulk.embulk-plugins" version "0.5.5"
+    id "checkstyle"
 }
 
 repositories {
@@ -14,8 +14,8 @@ group = "org.embulk"
 version = "1.7.1-SNAPSHOT"
 description = "Stores files on S3."
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
@@ -28,10 +28,10 @@ java {
 }
 
 dependencies {
-    compileOnly "org.embulk:embulk-spi:0.10.31"
-    compileOnly "org.embulk:embulk-api:0.10.31"
+    compileOnly "org.embulk:embulk-spi:0.10.37"
+    compileOnly "org.embulk:embulk-api:0.10.37"
 
-    compile("com.amazonaws:aws-java-sdk-s3:1.11.1034") {
+    implementation("com.amazonaws:aws-java-sdk-s3:1.11.1034") {
         // Jackson libraries conflict with embulk-core before v0.10.32.
         // They are once excluded here, and re-added explicitly below.
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
@@ -46,7 +46,7 @@ dependencies {
         exclude group: "commons-logging", module: "commons-logging"
     }
 
-    compile("com.amazonaws:aws-java-sdk-sts:1.11.466") {
+    implementation("com.amazonaws:aws-java-sdk-sts:1.11.466") {
         // They conflict with embulk-core. They are once excluded here,
         // and added explicitly with versions exactly the same with embulk-core:0.10.29.
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
@@ -58,7 +58,7 @@ dependencies {
         exclude group: "commons-logging", module: "commons-logging"
     }
 
-    compile("org.embulk:embulk-util-aws-credentials:0.4.1") {
+    implementation("org.embulk:embulk-util-aws-credentials:0.4.1") {
         // They conflict with embulk-core. They are once excluded here,
         // and added explicitly with versions exactly the same with embulk-core:0.10.29.
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
@@ -69,7 +69,7 @@ dependencies {
         exclude group: "joda-time", module: "joda-time"
     }
 
-    compile("org.embulk:embulk-util-config:0.3.1") {
+    implementation("org.embulk:embulk-util-config:0.3.2") {
         // Jackson libraries conflict with embulk-core before v0.10.32.
         // They are once excluded here, and re-added explicitly below.
         exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
@@ -79,12 +79,12 @@ dependencies {
         exclude group: "javax.validation", module: "validation-api"
     }
 
-    compile "org.embulk:embulk-util-file:0.1.3"
+    implementation "org.embulk:embulk-util-file:0.1.3"
 
     // Jackson libraries are once excluded from transitive dependencies of other dependencies, and re-added explicitly here.
     // The versions 2.6.7 are exactly the same with embulk-core's dependency before v0.10.32.
-    compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
-    compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
+    implementation "com.fasterxml.jackson.core:jackson-core:2.6.7"
 
     // "jackson-databind:2.6.7.1" is a little bit different from "embulk-core:0.10.31"'s dependency ("2.6.7"). But,
     // "embulk-output-s3" had contained "jackson-databind:2.6.7.1", not "2.6.7", for a long time. It has been working.
@@ -92,16 +92,16 @@ dependencies {
     //
     // "aws-java-sdk-s3:1.11.1034" depends on "jackson-databind:2.6.7.4", not "2.6.7.1", but keeping it with "2.6.7.1"
     // until Embulk v0.11 gets widely used.
-    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.6.7.1"
 
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
-    compile "javax.validation:validation-api:1.1.0.Final"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
+    implementation "javax.validation:validation-api:1.1.0.Final"
 
     // Joda-Time is once excluded from transitive dependencies of other dependencies, and re-added explicitly here.
     // The version 2.9.2 is exactly the same with embulk-core's dependency before v0.10.30.
-    compile "joda-time:joda-time:2.9.2"
+    implementation "joda-time:joda-time:2.9.2"
 
-    compile("org.slf4j:jcl-over-slf4j:1.7.12") {
+    implementation("org.slf4j:jcl-over-slf4j:1.7.12") {
         // commons-logging api is provided by jcl-over-slf4j below.
         exclude group: "commons-logging", module: "commons-logging"
 
@@ -120,13 +120,13 @@ dependencies {
     //    https://mvnrepository.com/artifact/com.sun.xml.bind/jaxb-impl
     // 4. JAXB 2.2.8 and 2.2.11 look to have the same set of classes.
     //    Although their internal implementations are a bit different, class loaders would not be confused.
-    compile "javax.xml.bind:jaxb-api:2.2.11"
-    compile "com.sun.xml.bind:jaxb-core:2.2.11"
-    compile "com.sun.xml.bind:jaxb-impl:2.2.11"
+    implementation "javax.xml.bind:jaxb-api:2.2.11"
+    implementation "com.sun.xml.bind:jaxb-core:2.2.11"
+    implementation "com.sun.xml.bind:jaxb-impl:2.2.11"
 
-    testCompile "junit:junit:4.13.2"
-    testCompile "org.embulk:embulk-core:0.10.31"
-    testCompile "org.embulk:embulk-core:0.10.31:tests"
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.embulk:embulk-core:0.10.37"
+    testImplementation "org.embulk:embulk-junit4:0.10.37"
 }
 
 embulkPlugin {
@@ -143,18 +143,24 @@ javadoc {
 }
 
 jar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 sourcesJar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 javadocJar {
-    from rootProject.file("LICENSE")
-    from rootProject.file("NOTICE")
+    metaInf {
+        from rootProject.file("LICENSE")
+        from rootProject.file("NOTICE")
+    }
 }
 
 publishing {
@@ -232,6 +238,10 @@ publishing {
 }
 
 signing {
+    if (project.hasProperty("signingKey") && project.hasProperty("signingPassword")) {
+        logger.lifecycle("Signing with an in-memory key.")
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
     sign publishing.publications.maven
 }
 
@@ -249,6 +259,18 @@ gem {
 
 gemPush {
     host = "https://rubygems.org"
+}
+
+test {
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+        showStandardStreams = true
+        outputs.upToDateWhen { false }
+    }
 }
 
 checkstyle {

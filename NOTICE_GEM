@@ -1,30 +1,125 @@
 embulk-output-s3
 Copyright 2015 Manabu Takayama, and the Embulk project
 
-This product includes software developed by Manabu Takayama, and in a part of the Embulk project (https://www.embulk.org/).
-It was originally developed by Manabu Takayama (https://github.com/llibra), and then transferred to the Embulk project.
-It was originally licenced under the MIT License before the transfer, and it is now licensed under the Apache Software License, Version 2.0.
+This product includes software developed by
+Manabu Takayama (https://github.com/llibra), and at
+the Embulk project (https://www.embulk.org/).
 
-The gem distribution of this product includes JARs of the Jackson project (https://github.com/FasterXML/jackson), as-is.
+This product was originally developed by
+Manabu Takayama, then transferred to
+the Embulk project.
+
+This product was originally licenced under
+the MIT License before the transfer, then re-licensed under
+the Apache Software License, Version 2.0.
+
+
+The gem distribution of this product includes products of
+the Jackson project, as-is.
 They are licensed under the Apache Software License, Version 2.0.
+See: https://github.com/FasterXML/jackson
 
-The gem distribution of this product includes JARs of the Jakarta Bean Validation API 1.1 (https://beanvalidation.org/1.1/), as-is.
-It is licensed under the Apache Software License, Version 2.0.
 
-The gem distribution of this product includes JARs of AWS SDK For Java 1.x (https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/welcome.html), and Amazon Ion Java (https://github.com/amzn/ion-java), as-is.
+The gem distribution of this product includes products of
+the Jakarta Bean Validation API 1.1, as-is.
 They are licensed under the Apache Software License, Version 2.0.
+See: https://beanvalidation.org/1.1/
 
-The gem distribution of this product includes a JAR of Joda-Time (https://www.joda.org/joda-time/), as-is.
-It is licensed under the Apache Software License, Version 2.0.
 
-The gem distribution of this product includes a JAR of the Apache Commons Codec (https://commons.apache.org/proper/commons-codec/), as-is.
-It is licensed under the Apache Software License, Version 2.0.
+The gem distribution of this product includes products of
+AWS SDK For Java 1.x, and Amazon Ion Java, as-is.
+They are licensed under the Apache Software License, Version 2.0.
+See: https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/welcome.html
+See: https://github.com/amzn/ion-java
 
-The gem distribution of this product includes a JAR of the Apache HttpClient 4.5 (http://hc.apache.org/httpcomponents-client-4.5.x/index.html), as-is.
-It is licensed under the Apache Software License, Version 2.0.
+---------------- NOTICE of AWS SDK For Java 1.x ----------------
+AWS SDK for Java
+Copyright 2010-2014 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
-The gem distribution of this product includes a JAR of the Apache HttpCore 4.4 (http://hc.apache.org/httpcomponents-core-4.4.x/index.html), as-is.
-It is licensed under the Apache Software License, Version 2.0.
+This product includes software developed by
+Amazon Technologies, Inc (http://www.amazon.com/).
 
-The gem distribution of this product includes a JAR of the JCL 1.2 implemented over SLF4J (http://www.slf4j.org/legacy.html) 1.7, as-is.
-It is licensed under the Apache Software License, Version 2.0.
+**********************
+THIRD PARTY COMPONENTS
+**********************
+This software includes third party software subject to the following copyrights:
+- XML parsing and utility functions from JetS3t - Copyright 2006-2009 James Murty.
+- PKCS#1 PEM encoded private key parsing and utility functions from oauth.googlecode.com - Copyright 1998-2010 AOL Inc.
+
+The licenses for these third party components are included in LICENSE.txt
+---------------- NOTICE of AWS SDK For Java 1.x ----------------
+
+
+The gem distribution of this product includes products of
+Joda-Time, as-is.
+They are licensed under the Apache Software License, Version 2.0.
+See: https://www.joda.org/joda-time/
+
+---------------------- NOTICE of Joda-Time ---------------------
+=============================================================================
+= NOTICE file corresponding to section 4d of the Apache License Version 2.0 =
+=============================================================================
+This product includes software developed by
+Joda.org (https://www.joda.org/).
+---------------------- NOTICE of Joda-Time ---------------------
+
+
+The gem distribution of this product includes products of
+the Apache Commons Codec, as-is.
+They are licensed under the Apache Software License, Version 2.0.
+See: https://commons.apache.org/proper/commons-codec/
+
+-------------- NOTICE of the Apache Commons Codec --------------
+Apache Commons Codec
+Copyright 2002-2020 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (https://www.apache.org/).
+
+src/test/org/apache/commons/codec/language/DoubleMetaphoneTest.java
+contains test data from http://aspell.net/test/orig/batch0.tab.
+Copyright (C) 2002 Kevin Atkinson (kevina@gnu.org)
+
+===============================================================================
+
+The content of package org.apache.commons.codec.language.bm has been translated
+from the original php source code available at http://stevemorse.org/phoneticinfo.htm
+with permission from the original authors.
+Original source copyright:
+Copyright (c) 2008 Alexander Beider & Stephen P. Morse.
+-------------- NOTICE of the Apache Commons Codec --------------
+
+
+The gem distribution of this product includes products of
+the Apache HttpClient 4.5, as-is.
+They are licensed under the Apache Software License, Version 2.0.
+See: http://hc.apache.org/httpcomponents-client-4.5.x/index.html
+
+-------------- NOTICE of the Apache HttpClient 4.5 -------------
+Apache HttpComponents Client
+Copyright 1999-2020 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+-------------- NOTICE of the Apache HttpClient 4.5 -------------
+
+
+The gem distribution of this product includes products of
+the Apache HttpCore 4.4, as-is.
+They are licensed under the Apache Software License, Version 2.0.
+See: http://hc.apache.org/httpcomponents-core-4.4.x/index.html
+
+--------------- NOTICE of the Apache HttpCore 4.4 --------------
+Apache HttpComponents Core
+Copyright 2005-2020 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+--------------- NOTICE of the Apache HttpCore 4.4 --------------
+
+
+The gem distribution of this product includes products of
+the JCL 1.2 implemented over SLF4J 1.7, as-is.
+They are licensed under the Apache Software License, Version 2.0.
+See: http://www.slf4j.org/legacy.html

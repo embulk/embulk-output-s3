@@ -194,14 +194,15 @@ public class S3FileOutputPlugin
             // set http proxy
             // backward compatibility
             if (task.getProxyHost().isPresent()) {
-                logger.warn("proxy_host is deprecated. use http_proxy.host instead");
+                logger.warn("Configuration with \"proxy_host\" is deprecated. Use \"http_proxy.host\" instead.");
                 if (!task.getHttpProxy().isPresent()) {
                     ConfigMapper configMapper = CONFIG_MAPPER_FACTORY.createConfigMapper();
                     ConfigSource configSource = CONFIG_MAPPER_FACTORY.newConfigSource();
                     configSource.set("host", task.getProxyHost().get());
                     HttpProxy httpProxy = configMapper.map(configSource, HttpProxy.class);
                     task.setHttpProxy(Optional.of(httpProxy));
-                }else{
+                }
+                else {
                     HttpProxy httpProxy = task.getHttpProxy().get();
                     if (httpProxy.getHost().isEmpty()) {
                         httpProxy.setHost(task.getProxyHost().get());
@@ -211,7 +212,7 @@ public class S3FileOutputPlugin
             }
 
             if (task.getProxyPort().isPresent()) {
-                logger.warn("proxy_port is deprecated. use http_proxy.port instead");
+                logger.warn("Configuration with \"proxy_port\" is deprecated. Use \"http_proxy.port\" instead.");
                 HttpProxy httpProxy = task.getHttpProxy().get();
                 if (!httpProxy.getPort().isPresent()) {
                     httpProxy.setPort(task.getProxyPort());
@@ -226,7 +227,8 @@ public class S3FileOutputPlugin
             return clientConfig;
         }
 
-        private void setHttpProxyInAwsClient(ClientConfiguration clientConfig, HttpProxy httpProxy) {
+        private void setHttpProxyInAwsClient(ClientConfiguration clientConfig, HttpProxy httpProxy)
+        {
             // host
             clientConfig.setProxyHost(httpProxy.getHost());
 

@@ -27,12 +27,12 @@
 - **canned_acl**: canned access control list for created objects ([enum](#cannedaccesscontrollist), default: null)
 - [Deprecated] **proxy_host**: proxy host to use when accessing AWS S3 via proxy. (string, default: null )
 - [Deprecated] **proxy_port**: proxy port to use when accessing AWS S3 via proxy. (string, default: null )
-- **http_proxy** http proxy configuration to use when accessing AWS S3 via http proxy. (optional)
-  - **host** proxy host (string, required)
-  - **port** proxy port (int, optional)
-  - **https** use https or not (boolean, default true)
-  - **user** proxy user (string, optional)
-  - **password** proxy password (string, optional)
+- **http_proxy**: http proxy configuration to use when accessing AWS S3 via http proxy. (optional)
+  - **host**: proxy host (string, required)
+  - **port**: proxy port (int, optional)
+  - **https**: use https or not (boolean, default true)
+  - **user**: proxy user (string, optional)
+  - **password**: proxy password (string, optional)
 
 - **auth_method**: name of mechanism to authenticate requests (basic, env, instance, profile, properties, anonymous, or session. default: basic)
 
@@ -114,4 +114,46 @@ formatter:
 
 ```
 $ ./gradlew gem
+```
+
+For Maintainers
+----------------
+
+### Release
+
+Modify `version` in `build.gradle` at a detached commit, and then tag the commit with an annotation.
+
+```
+git checkout --detach master
+
+(Edit: Remove "-SNAPSHOT" in "version" in build.gradle.)
+
+git add build.gradle
+
+git commit -m "Release vX.Y.Z"
+
+git tag -a vX.Y.Z
+
+(Edit: Write a tag annotation in the changelog format.)
+```
+
+See [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) for the changelog format. We adopt a part of it for Git's tag annotation like below.
+
+```
+## [X.Y.Z] - YYYY-MM-DD
+
+### Added
+- Added a feature.
+
+### Changed
+- Changed something.
+
+### Fixed
+- Fixed a bug.
+```
+
+Push the annotated tag, then. It triggers a release operation on GitHub Actions after approval.
+
+```
+git push -u origin vX.Y.Z
 ```
