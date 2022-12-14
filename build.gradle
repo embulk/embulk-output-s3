@@ -58,6 +58,8 @@ dependencies {
         exclude group: "commons-logging", module: "commons-logging"
     }
 
+    implementation "org.embulk:embulk-util-retryhelper:0.8.2"
+
     implementation("org.embulk:embulk-util-aws-credentials:0.4.1") {
         // They conflict with embulk-core. They are once excluded here,
         // and added explicitly with versions exactly the same with embulk-core:0.10.29.
