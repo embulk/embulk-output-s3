@@ -42,11 +42,11 @@ import org.embulk.util.config.Task;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
 import org.embulk.spi.Buffer;
-import org.embulk.spi.Exec;
 import org.embulk.spi.FileOutput;
 import org.embulk.spi.FileOutputPlugin;
 import org.embulk.spi.TransactionalFileOutput;
 import org.embulk.util.config.TaskMapper;
+import org.embulk.util.retryhelper.RetryExecutor;
 import org.slf4j.Logger;
 
 import com.amazonaws.ClientConfiguration;
@@ -301,11 +301,23 @@ public class S3FileOutputPlugin
 
         private void putFile(Path from, String key)
         {
+            RetryExecutor retryExecutor = RetryExecutor.builder()
+                    .withRetryLimit(5)
+                    .build();
+
             PutObjectRequest request = new PutObjectRequest(bucket, key, from.toFile());
             if (cannedAccessControlListOptional.isPresent()) {
                 request.withCannedAcl(cannedAccessControlListOptional.get());
             }
-            client.putObject(request);
+
+            new DefaultRetryable<Object>("Put file to s3") {
+                @Override
+                public Object call()
+                {
+                    client.putObject(request);
+                    return null;
+                }
+            }.executeWith(retryExecutor);
         }
 
         private void closeCurrent()
