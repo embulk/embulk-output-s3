@@ -58,6 +58,8 @@ dependencies {
         exclude group: "commons-logging", module: "commons-logging"
     }
 
+    implementation "org.embulk:embulk-util-retryhelper:0.8.2"
+
     implementation("org.embulk:embulk-util-aws-credentials:0.4.1") {
         // They conflict with embulk-core. They are once excluded here,
         // and added explicitly with versions exactly the same with embulk-core:0.10.29.
@@ -125,6 +127,7 @@ dependencies {
     implementation "com.sun.xml.bind:jaxb-impl:2.2.11"
 
     testImplementation "junit:junit:4.13.2"
+    testImplementation "org.embulk:embulk-deps:0.10.37"
     testImplementation "org.embulk:embulk-core:0.10.37"
     testImplementation "org.embulk:embulk-junit4:0.10.37"
 }
